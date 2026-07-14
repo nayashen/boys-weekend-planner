@@ -1,6 +1,6 @@
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
-import Dashboard from "./pages/Dashboard";
+import Members from "./pages/Members";
 
 function App() {
   return (
@@ -21,7 +21,7 @@ function App() {
       >
         <TopBar />
 
-        <Dashboard />
+        <Members />
       </div>
     </div>
   );
