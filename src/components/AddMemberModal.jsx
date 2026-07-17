@@ -1,19 +1,39 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-function AddMemberModal({ onClose, onSave }) {
+function AddMemberModal({
+  onClose,
+  onSave,
+  memberToEdit,
+}) {
   const [member, setMember] = useState({
     name: "",
     phone: "",
     email: "",
-    contribution: "",
+    monthlyContribution: "",
     drink: "",
     emergency: "",
   });
 
-  function handleChange(e) {
+  useEffect(() => {
+    if (memberToEdit) {
+      setMember({
+        name: memberToEdit.name || "",
+        phone: memberToEdit.phone || "",
+        email: memberToEdit.email || "",
+        monthlyContribution:
+          memberToEdit.monthlyContribution ||
+          memberToEdit.contribution ||
+          "",
+        drink: memberToEdit.drink || "",
+        emergency: memberToEdit.emergency || "",
+      });
+    }
+  }, [memberToEdit]);
+
+  function handleChange(event) {
     setMember({
       ...member,
-      [e.target.name]: e.target.value,
+      [event.target.name]: event.target.value,
     });
   }
 
@@ -24,9 +44,10 @@ function AddMemberModal({ onClose, onSave }) {
     }
 
     onSave({
-      id: Date.now(),
       ...member,
-      paid: false,
+      monthlyContribution: Number(
+        member.monthlyContribution || 0
+      ),
     });
 
     onClose();
@@ -41,17 +62,23 @@ function AddMemberModal({ onClose, onSave }) {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        zIndex: 1000,
       }}
     >
       <div
         style={{
           width: "550px",
+          maxWidth: "90%",
           background: "white",
           padding: "30px",
           borderRadius: "12px",
         }}
       >
-        <h2>Add Member</h2>
+        <h2>
+          {memberToEdit
+            ? "Edit Member"
+            : "Add Member"}
+        </h2>
 
         <input
           name="name"
@@ -78,9 +105,10 @@ function AddMemberModal({ onClose, onSave }) {
         />
 
         <input
-          name="contribution"
+          type="number"
+          name="monthlyContribution"
           placeholder="Monthly Contribution"
-          value={member.contribution}
+          value={member.monthlyContribution}
           onChange={handleChange}
           style={inputStyle}
         />
@@ -109,7 +137,13 @@ function AddMemberModal({ onClose, onSave }) {
             marginTop: "20px",
           }}
         >
-          <button onClick={onClose}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: "10px 20px",
+              cursor: "pointer",
+            }}
+          >
             Cancel
           </button>
 
@@ -121,9 +155,12 @@ function AddMemberModal({ onClose, onSave }) {
               border: "none",
               padding: "10px 20px",
               borderRadius: "8px",
+              cursor: "pointer",
             }}
           >
-            Save Member
+            {memberToEdit
+              ? "Save Changes"
+              : "Add Member"}
           </button>
         </div>
       </div>
