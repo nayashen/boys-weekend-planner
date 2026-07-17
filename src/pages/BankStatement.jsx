@@ -17,12 +17,13 @@ function BankStatement() {
   const [description, setDescription] =
     useState("");
   const [amount, setAmount] = useState("");
-  const [type, setType] = useState("credit");
+  const [type, setType] =
+    useState("credit");
   const [category, setCategory] =
     useState("Other");
 
   // =========================
-  // CLEAN INVALID TRANSACTIONS
+  // VALID TRANSACTIONS
   // =========================
 
   const validTransactions =
@@ -35,8 +36,10 @@ function BankStatement() {
           Number(transaction.amount)
         ) &&
         Number(transaction.amount) > 0 &&
-        (transaction.type === "credit" ||
-          transaction.type === "debit")
+        (
+          transaction.type === "credit" ||
+          transaction.type === "debit"
+        )
     );
 
   // =========================
@@ -51,7 +54,9 @@ function BankStatement() {
       !description ||
       !amount
     ) {
-      alert("Please complete all fields");
+      alert(
+        "Please complete all fields"
+      );
       return;
     }
 
@@ -59,7 +64,9 @@ function BankStatement() {
       {
         date,
         description,
-        amount: Math.abs(Number(amount)),
+        amount: Math.abs(
+          Number(amount)
+        ),
         type,
         category,
         status: "unmatched",
@@ -81,7 +88,8 @@ function BankStatement() {
   // =========================
 
   function handleCSVUpload(e) {
-    const file = e.target.files[0];
+    const file =
+      e.target.files[0];
 
     if (!file) return;
 
@@ -120,39 +128,61 @@ function BankStatement() {
                 row.DEBIT ||
                 "";
 
-              let transactionType = "";
-              let rawAmount = "";
+              let transactionType =
+                "";
+
+              let rawAmount =
+                "";
 
               if (
                 creditValue !== "" &&
                 creditValue !== null &&
-                creditValue !== undefined
+                creditValue !==
+                  undefined
               ) {
-                transactionType = "credit";
-                rawAmount = creditValue;
+                transactionType =
+                  "credit";
+
+                rawAmount =
+                  creditValue;
               } else if (
                 debitValue !== "" &&
                 debitValue !== null &&
-                debitValue !== undefined
+                debitValue !==
+                  undefined
               ) {
-                transactionType = "debit";
-                rawAmount = debitValue;
+                transactionType =
+                  "debit";
+
+                rawAmount =
+                  debitValue;
               }
 
-              // Clean amount safely
-              const cleanedAmount = String(
-                rawAmount
-              )
-                .replace(/R/gi, "")
-                .replace(/\s/g, "")
-                .replace(/,/g, "")
-                .replace(/[()]/g, "")
-                .trim();
+              const cleanedAmount =
+                String(rawAmount)
+                  .replace(
+                    /R/gi,
+                    ""
+                  )
+                  .replace(
+                    /\s/g,
+                    ""
+                  )
+                  .replace(
+                    /,/g,
+                    ""
+                  )
+                  .replace(
+                    /[()]/g,
+                    ""
+                  )
+                  .trim();
 
               const numericAmount =
-                Number(cleanedAmount);
+                Number(
+                  cleanedAmount
+                );
 
-              // Reject invalid rows
               if (
                 !dateValue ||
                 !descriptionValue ||
@@ -160,7 +190,8 @@ function BankStatement() {
                 !Number.isFinite(
                   numericAmount
                 ) ||
-                numericAmount === 0
+                numericAmount ===
+                  0
               ) {
                 return null;
               }
@@ -170,15 +201,17 @@ function BankStatement() {
                   dateValue
                 ).trim(),
 
-                description: String(
-                  descriptionValue
-                ).trim(),
+                description:
+                  String(
+                    descriptionValue
+                  ).trim(),
 
                 amount: Math.abs(
                   numericAmount
                 ),
 
-                type: transactionType,
+                type:
+                  transactionType,
 
                 category:
                   transactionType ===
@@ -186,13 +219,15 @@ function BankStatement() {
                     ? "Member Contribution"
                     : "Other",
 
-                status: "unmatched",
+                status:
+                  "unmatched",
 
                 memberId: null,
 
                 memberName: "",
 
-                paymentCreated: false,
+                paymentCreated:
+                  false,
               };
             })
             .filter(Boolean);
@@ -229,7 +264,7 @@ function BankStatement() {
   }
 
   // =========================
-  // MATCH MEMBER
+  // MATCH TRANSACTION TO MEMBER
   // =========================
 
   function matchTransaction(
@@ -245,10 +280,17 @@ function BankStatement() {
           String(memberId)
       );
 
-    if (!selectedMember) return;
+    if (!selectedMember) {
+      alert(
+        "Member could not be found."
+      );
 
-    const paymentAlreadyExists =
-      payments.some(
+      return;
+    }
+
+    // Prevent duplicate payment
+    const existingPayment =
+      payments.find(
         (payment) =>
           String(
             payment.transactionId
@@ -256,14 +298,19 @@ function BankStatement() {
           String(transaction.id)
       );
 
+    // =========================
+    // CREATE CONTRIBUTION
+    // =========================
+
     if (
-      !transaction.paymentCreated &&
-      !paymentAlreadyExists &&
-      transaction.type === "credit"
+      transaction.type ===
+        "credit" &&
+      !existingPayment
     ) {
-      const dateObject = new Date(
-        transaction.date
-      );
+      const dateObject =
+        new Date(
+          transaction.date
+        );
 
       const contributionMonth =
         dateObject.toLocaleDateString(
@@ -274,30 +321,62 @@ function BankStatement() {
           }
         );
 
-      addPayment({
-        memberId: selectedMember.id,
-        member: selectedMember.name,
-        memberName: selectedMember.name,
-        amount: Number(
-          transaction.amount
-        ),
+      const newPayment = {
+        memberId:
+          selectedMember.id,
+
+        member:
+          selectedMember.name,
+
+        memberName:
+          selectedMember.name,
+
+        amount:
+          Number(
+            transaction.amount
+          ),
+
         contributionMonth,
-        date: transaction.date,
+
+        date:
+          transaction.date,
+
         description:
           transaction.description,
-        transactionId: transaction.id,
+
+        transactionId:
+          transaction.id,
+
         category:
           "Member Contribution",
-        type: "credit",
-      });
+
+        type:
+          "credit",
+      };
+
+      addPayment(
+        newPayment
+      );
     }
+
+    // =========================
+    // UPDATE TRANSACTION
+    // =========================
 
     updateTransaction({
       ...transaction,
-      memberId: selectedMember.id,
-      memberName: selectedMember.name,
-      status: "matched",
-      paymentCreated: true,
+
+      memberId:
+        selectedMember.id,
+
+      memberName:
+        selectedMember.name,
+
+      status:
+        "matched",
+
+      paymentCreated:
+        true,
     });
   }
 
@@ -309,119 +388,183 @@ function BankStatement() {
         margin: "0 auto",
       }}
     >
-      <h1>🏦 Bank Statement</h1>
+      <h1>
+        🏦 Bank Statement
+      </h1>
 
       <p
         style={{
           color: "#666",
-          marginBottom: "30px",
+          marginBottom:
+            "30px",
         }}
       >
-        Import and manage bank transactions.
+        Import and manage bank
+        transactions.
       </p>
 
       {/* CSV UPLOAD */}
-      <div style={cardStyle}>
-        <h2>📂 Import Bank Statement</h2>
 
-        <p style={{ color: "#666" }}>
-          Upload a CSV bank statement to
-          automatically import transactions.
+      <div
+        style={cardStyle}
+      >
+        <h2>
+          📂 Import Bank Statement
+        </h2>
+
+        <p
+          style={{
+            color: "#666",
+          }}
+        >
+          Upload a CSV bank
+          statement to automatically
+          import transactions.
         </p>
 
         <input
           type="file"
           accept=".csv"
-          onChange={handleCSVUpload}
+          onChange={
+            handleCSVUpload
+          }
           style={{
-            marginTop: "10px",
+            marginTop:
+              "10px",
           }}
         />
 
         <p
           style={{
-            fontSize: "13px",
-            color: "#888",
-            marginTop: "15px",
+            fontSize:
+              "13px",
+            color:
+              "#888",
+            marginTop:
+              "15px",
           }}
         >
-          Supported columns: Date,
-          Description, Credit, Debit
+          Supported columns:
+          Date, Description,
+          Credit, Debit
         </p>
       </div>
 
       {/* MANUAL TRANSACTION */}
-      <div style={cardStyle}>
+
+      <div
+        style={cardStyle}
+      >
         <h2>
-          ➕ Add Transaction Manually
+          ➕ Add Transaction
+          Manually
         </h2>
 
         <form
-          onSubmit={handleSubmit}
+          onSubmit={
+            handleSubmit
+          }
           style={{
-            display: "grid",
+            display:
+              "grid",
             gridTemplateColumns:
               "1fr 2fr 1fr 1fr 1fr auto",
-            gap: "12px",
-            alignItems: "end",
+            gap:
+              "12px",
+            alignItems:
+              "end",
           }}
         >
           <div>
-            <label>Date</label>
+            <label>
+              Date
+            </label>
 
             <input
               type="date"
-              value={date}
-              onChange={(e) =>
-                setDate(e.target.value)
+              value={
+                date
               }
-              style={inputStyle}
+              onChange={(e) =>
+                setDate(
+                  e.target
+                        .value
+                )
+              }
+              style={
+                inputStyle
+              }
               required
             />
           </div>
 
           <div>
-            <label>Description</label>
+            <label>
+              Description
+            </label>
 
             <input
               type="text"
               placeholder="Example: John payment"
-              value={description}
+              value={
+                description
+              }
               onChange={(e) =>
                 setDescription(
-                  e.target.value
+                  e.target
+                    .value
                 )
               }
-              style={inputStyle}
+              style={
+                inputStyle
+              }
               required
             />
           </div>
 
           <div>
-            <label>Amount</label>
+            <label>
+              Amount
+            </label>
 
             <input
               type="number"
               placeholder="500"
-              value={amount}
-              onChange={(e) =>
-                setAmount(e.target.value)
+              value={
+                amount
               }
-              style={inputStyle}
+              onChange={(e) =>
+                setAmount(
+                  e.target
+                    .value
+                )
+              }
+              style={
+                inputStyle
+              }
               required
               min="0"
             />
           </div>
 
           <div>
-            <label>Type</label>
+            <label>
+              Type
+            </label>
 
             <select
-              value={type}
-              onChange={(e) =>
-                setType(e.target.value)
+              value={
+                type
               }
-              style={inputStyle}
+              onChange={(e) =>
+                setType(
+                  e.target
+                    .value
+                )
+              }
+              style={
+                inputStyle
+              }
             >
               <option value="credit">
                 Credit
@@ -434,14 +577,23 @@ function BankStatement() {
           </div>
 
           <div>
-            <label>Category</label>
+            <label>
+              Category
+            </label>
 
             <select
-              value={category}
-              onChange={(e) =>
-                setCategory(e.target.value)
+              value={
+                category
               }
-              style={inputStyle}
+              onChange={(e) =>
+                setCategory(
+                  e.target
+                    .value
+                )
+              }
+              style={
+                inputStyle
+              }
             >
               <option value="Other">
                 Other
@@ -471,7 +623,9 @@ function BankStatement() {
 
           <button
             type="submit"
-            style={buttonStyle}
+            style={
+              buttonStyle
+            }
           >
             Add
           </button>
@@ -479,32 +633,42 @@ function BankStatement() {
       </div>
 
       {/* TRANSACTIONS */}
+
       <div
         style={{
           ...cardStyle,
-          overflowX: "auto",
+          overflowX:
+            "auto",
         }}
       >
-        <h2>Transactions</h2>
+        <h2>
+          Transactions
+        </h2>
 
         {validTransactions.length ===
         0 ? (
           <p
             style={{
-              color: "#777",
-              marginTop: "20px",
+              color:
+                "#777",
+              marginTop:
+                "20px",
             }}
           >
-            No transactions added yet.
+            No transactions
+            added yet.
           </p>
         ) : (
           <table
             style={{
-              width: "100%",
+              width:
+                "100%",
               borderCollapse:
                 "collapse",
-              marginTop: "20px",
-              minWidth: "1200px",
+              marginTop:
+                "20px",
+              minWidth:
+                "1200px",
             }}
           >
             <thead>
@@ -516,35 +680,67 @@ function BankStatement() {
                     "left",
                 }}
               >
-                <th style={cellStyle}>
+                <th
+                  style={
+                    cellStyle
+                  }
+                >
                   Date
                 </th>
 
-                <th style={cellStyle}>
+                <th
+                  style={
+                    cellStyle
+                  }
+                >
                   Description
                 </th>
 
-                <th style={cellStyle}>
+                <th
+                  style={
+                    cellStyle
+                  }
+                >
                   Amount
                 </th>
 
-                <th style={cellStyle}>
+                <th
+                  style={
+                    cellStyle
+                  }
+                >
                   Type
                 </th>
 
-                <th style={cellStyle}>
+                <th
+                  style={
+                    cellStyle
+                  }
+                >
                   Category
                 </th>
 
-                <th style={cellStyle}>
+                <th
+                  style={
+                    cellStyle
+                  }
+                >
                   Match Member
                 </th>
 
-                <th style={cellStyle}>
+                <th
+                  style={
+                    cellStyle
+                  }
+                >
                   Status
                 </th>
 
-                <th style={cellStyle}>
+                <th
+                  style={
+                    cellStyle
+                  }
+                >
                   Action
                 </th>
               </tr>
@@ -552,21 +748,33 @@ function BankStatement() {
 
             <tbody>
               {validTransactions.map(
-                (transaction) => (
+                (
+                  transaction
+                ) => (
                   <tr
-                    key={transaction.id}
+                    key={
+                      transaction.id
+                    }
                     style={{
                       borderBottom:
                         "1px solid #eee",
                     }}
                   >
-                    <td style={cellStyle}>
+                    <td
+                      style={
+                        cellStyle
+                      }
+                    >
                       {
                         transaction.date
                       }
                     </td>
 
-                    <td style={cellStyle}>
+                    <td
+                      style={
+                        cellStyle
+                      }
+                    >
                       {
                         transaction.description
                       }
@@ -594,17 +802,33 @@ function BankStatement() {
                       ).toLocaleString()}
                     </td>
 
-                    <td style={cellStyle}>
-                      {transaction.type}
+                    <td
+                      style={
+                        cellStyle
+                      }
+                    >
+                      {
+                        transaction.type
+                      }
                     </td>
 
-                    <td style={cellStyle}>
+                    <td
+                      style={
+                        cellStyle
+                      }
+                    >
                       📦{" "}
-                      {transaction.category ||
-                        "Other"}
+                      {
+                        transaction.category ||
+                        "Other"
+                      }
                     </td>
 
-                    <td style={cellStyle}>
+                    <td
+                      style={
+                        cellStyle
+                      }
+                    >
                       {transaction.status ===
                       "matched" ? (
                         <strong
@@ -623,10 +847,14 @@ function BankStatement() {
                             transaction.memberId ||
                             ""
                           }
-                          onChange={(e) =>
+                          onChange={(
+                            e
+                          ) =>
                             matchTransaction(
                               transaction,
-                              e.target.value
+                              e
+                                .target
+                                .value
                             )
                           }
                           style={{
@@ -643,7 +871,9 @@ function BankStatement() {
                           </option>
 
                           {members.map(
-                            (member) => (
+                            (
+                              member
+                            ) => (
                               <option
                                 key={
                                   member.id
@@ -662,7 +892,11 @@ function BankStatement() {
                       )}
                     </td>
 
-                    <td style={cellStyle}>
+                    <td
+                      style={
+                        cellStyle
+                      }
+                    >
                       <span
                         style={{
                           padding:
@@ -687,7 +921,11 @@ function BankStatement() {
                       </span>
                     </td>
 
-                    <td style={cellStyle}>
+                    <td
+                      style={
+                        cellStyle
+                      }
+                    >
                       <button
                         onClick={() =>
                           deleteTransaction(
@@ -697,7 +935,8 @@ function BankStatement() {
                         style={{
                           background:
                             "#ef4444",
-                          color: "white",
+                          color:
+                            "white",
                           border:
                             "none",
                           padding:
@@ -723,36 +962,53 @@ function BankStatement() {
 }
 
 const cardStyle = {
-  background: "white",
-  padding: "25px",
-  borderRadius: "12px",
-  marginBottom: "30px",
+  background:
+    "white",
+  padding:
+    "25px",
+  borderRadius:
+    "12px",
+  marginBottom:
+    "30px",
   boxShadow:
     "0 2px 8px rgba(0,0,0,0.08)",
 };
 
 const inputStyle = {
-  width: "100%",
-  padding: "10px",
-  marginTop: "6px",
+  width:
+    "100%",
+  padding:
+    "10px",
+  marginTop:
+    "6px",
   border:
     "1px solid #d1d5db",
-  borderRadius: "6px",
-  boxSizing: "border-box",
+  borderRadius:
+    "6px",
+  boxSizing:
+    "border-box",
 };
 
 const buttonStyle = {
-  background: "#2563eb",
-  color: "white",
-  border: "none",
-  padding: "11px 18px",
-  borderRadius: "6px",
-  cursor: "pointer",
-  fontWeight: "bold",
+  background:
+    "#2563eb",
+  color:
+    "white",
+  border:
+    "none",
+  padding:
+    "11px 18px",
+  borderRadius:
+    "6px",
+  cursor:
+    "pointer",
+  fontWeight:
+    "bold",
 };
 
 const cellStyle = {
-  padding: "12px",
+  padding:
+    "12px",
 };
 
 export default BankStatement;

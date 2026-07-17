@@ -6,13 +6,74 @@ function Dashboard() {
     payments,
     transactions,
     tripSettings,
+    accommodation,
+    selectedAccommodation,
+    groceries,
+    expenses,
   } = useTrip();
 
   const currency =
     tripSettings.currency || "R";
 
   // =========================
-  // ONLY USE VALID TRANSACTIONS
+  // SELECTED ACCOMMODATION
+  // =========================
+
+  const selectedAccommodationOption =
+    accommodation.find(
+      (option) =>
+        String(option.id) ===
+        String(selectedAccommodation)
+    );
+
+  const accommodationCost =
+    selectedAccommodationOption
+      ? Number(
+          selectedAccommodationOption.price || 0
+        )
+      : 0;
+
+  // =========================
+  // GROCERY COSTS
+  // =========================
+
+  const totalGroceryCost =
+    groceries.reduce(
+      (sum, grocery) =>
+        sum +
+        Number(grocery.price || 0) *
+          Number(grocery.quantity || 0),
+      0
+    );
+
+  const purchasedGroceryCost =
+    groceries
+      .filter(
+        (grocery) =>
+          grocery.purchased
+      )
+      .reduce(
+        (sum, grocery) =>
+          sum +
+          Number(grocery.price || 0) *
+            Number(grocery.quantity || 0),
+        0
+      );
+
+  // =========================
+  // OTHER EXPENSES
+  // =========================
+
+  const totalOtherExpenses =
+    expenses.reduce(
+      (sum, expense) =>
+        sum +
+        Number(expense.amount || 0),
+      0
+    );
+
+  // =========================
+  // VALID TRANSACTIONS
   // =========================
 
   const validTransactions =
@@ -49,7 +110,7 @@ function Dashboard() {
       );
 
   // =========================
-  // MONEY SPENT
+  // ACTUAL MONEY SPENT
   // =========================
 
   const moneySpent =
@@ -71,6 +132,22 @@ function Dashboard() {
 
   const currentBalance =
     moneyReceived - moneySpent;
+
+  // =========================
+  // PLANNED COSTS
+  // =========================
+
+  const plannedCosts =
+    accommodationCost +
+    totalGroceryCost +
+    totalOtherExpenses;
+
+  // =========================
+  // PROJECTED BALANCE
+  // =========================
+
+  const projectedBalance =
+    currentBalance - plannedCosts;
 
   // =========================
   // CONTRIBUTION TARGET
@@ -163,8 +240,10 @@ function Dashboard() {
 
       <p>
         📍{" "}
-        {tripSettings.destination ||
-          "No destination set"}
+        {selectedAccommodationOption
+          ? selectedAccommodationOption.location
+          : tripSettings.destination ||
+            "No destination set"}
       </p>
 
       {/* FINANCIAL OVERVIEW */}
@@ -206,7 +285,7 @@ function Dashboard() {
 
         <DashboardCard
           icon="📤"
-          title="Money Spent"
+          title="Actual Money Spent"
           value={`${currency}${moneySpent.toLocaleString()}`}
           valueColor="#dc2626"
         />
@@ -217,6 +296,108 @@ function Dashboard() {
           value={`${currency}${totalContributions.toLocaleString()}`}
           valueColor="#2563eb"
         />
+
+        <DashboardCard
+          icon="🏡"
+          title="Accommodation"
+          value={`${currency}${accommodationCost.toLocaleString()}`}
+          valueColor="#7c3aed"
+        />
+
+        <DashboardCard
+          icon="🛒"
+          title="Planned Groceries"
+          value={`${currency}${totalGroceryCost.toLocaleString()}`}
+          valueColor="#f59e0b"
+        />
+
+        <DashboardCard
+          icon="🧾"
+          title="Other Expenses"
+          value={`${currency}${totalOtherExpenses.toLocaleString()}`}
+          valueColor="#dc2626"
+        />
+
+        <DashboardCard
+          icon="📊"
+          title="Projected Balance"
+          value={`${currency}${projectedBalance.toLocaleString()}`}
+          valueColor={
+            projectedBalance < 0
+              ? "#dc2626"
+              : "#059669"
+          }
+        />
+      </div>
+
+      {/* TRIP COST SUMMARY */}
+
+      <div
+        style={{
+          background: "white",
+          padding: "25px",
+          borderRadius: "12px",
+          marginTop: "40px",
+          boxShadow:
+            "0 2px 8px rgba(0,0,0,0.08)",
+        }}
+      >
+        <h2>
+          🧳 Trip Cost Summary
+        </h2>
+
+        <p>
+          🏡 Accommodation:{" "}
+          <strong>
+            {currency}
+            {accommodationCost.toLocaleString()}
+          </strong>
+        </p>
+
+        <p>
+          🛒 Total Grocery Budget:{" "}
+          <strong>
+            {currency}
+            {totalGroceryCost.toLocaleString()}
+          </strong>
+        </p>
+
+        <p>
+          ✅ Purchased Groceries:{" "}
+          <strong>
+            {currency}
+            {purchasedGroceryCost.toLocaleString()}
+          </strong>
+        </p>
+
+        <p>
+          🧾 Other Expenses:{" "}
+          <strong>
+            {currency}
+            {totalOtherExpenses.toLocaleString()}
+          </strong>
+        </p>
+
+        <hr />
+
+        <h3>
+          Total Planned Trip Costs:{" "}
+          {currency}
+          {plannedCosts.toLocaleString()}
+        </h3>
+
+        <h3
+          style={{
+            color:
+              projectedBalance < 0
+                ? "#dc2626"
+                : "#059669",
+          }}
+        >
+          Projected Balance:{" "}
+          {currency}
+          {projectedBalance.toLocaleString()}
+        </h3>
       </div>
 
       {/* CONTRIBUTION PROGRESS */}
