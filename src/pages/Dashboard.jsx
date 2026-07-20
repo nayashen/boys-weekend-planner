@@ -2,25 +2,25 @@ import { useTrip } from "../context/TripContext";
 
 function Dashboard() {
   const {
-    members,
-    payments,
-    transactions,
-    tripSettings,
-    accommodation,
+    members = [],
+    payments = [],
+    transactions = [],
+    tripSettings = {},
+    accommodation = [],
     selectedAccommodation,
-    groceries,
-    expenses,
+    groceries = [],
+    expenses = [],
   } = useTrip();
 
   const currency =
-    tripSettings.currency || "R";
+    tripSettings?.currency || "R";
 
   // =========================
   // SELECTED ACCOMMODATION
   // =========================
 
   const selectedAccommodationOption =
-    accommodation.find(
+    (accommodation || []).find(
       (option) =>
         String(option.id) ===
         String(selectedAccommodation)
@@ -38,7 +38,7 @@ function Dashboard() {
   // =========================
 
   const totalGroceryCost =
-    groceries.reduce(
+    (groceries || []).reduce(
       (sum, grocery) =>
         sum +
         Number(grocery.price || 0) *
@@ -47,7 +47,7 @@ function Dashboard() {
     );
 
   const purchasedGroceryCost =
-    groceries
+    (groceries || [])
       .filter(
         (grocery) =>
           grocery.purchased
@@ -65,7 +65,7 @@ function Dashboard() {
   // =========================
 
   const totalOtherExpenses =
-    expenses.reduce(
+    (expenses || []).reduce(
       (sum, expense) =>
         sum +
         Number(expense.amount || 0),
@@ -77,7 +77,7 @@ function Dashboard() {
   // =========================
 
   const validTransactions =
-    transactions.filter(
+    (transactions || []).filter(
       (transaction) =>
         transaction &&
         transaction.date &&
@@ -105,7 +105,7 @@ function Dashboard() {
       .reduce(
         (sum, transaction) =>
           sum +
-          Number(transaction.amount),
+          Number(transaction.amount || 0),
         0
       );
 
@@ -122,7 +122,7 @@ function Dashboard() {
       .reduce(
         (sum, transaction) =>
           sum +
-          Number(transaction.amount),
+          Number(transaction.amount || 0),
         0
       );
 
@@ -154,7 +154,7 @@ function Dashboard() {
   // =========================
 
   const targetPerPerson = Number(
-    tripSettings.targetContribution || 0
+    tripSettings?.targetContribution || 0
   );
 
   const totalTarget =
@@ -165,7 +165,7 @@ function Dashboard() {
   // =========================
 
   const totalContributions =
-    payments.reduce(
+    (payments || []).reduce(
       (sum, payment) =>
         sum +
         Number(payment.amount || 0),
@@ -184,7 +184,7 @@ function Dashboard() {
 
   const paidMemberIds =
     new Set(
-      payments
+      (payments || [])
         .filter(
           (payment) =>
             payment.memberId
@@ -234,7 +234,7 @@ function Dashboard() {
       {/* HEADER */}
 
       <h1>
-        {tripSettings.tripName ||
+        {tripSettings?.tripName ||
           "Boys Weekend"}
       </h1>
 
@@ -242,7 +242,7 @@ function Dashboard() {
         📍{" "}
         {selectedAccommodationOption
           ? selectedAccommodationOption.location
-          : tripSettings.destination ||
+          : tripSettings?.destination ||
             "No destination set"}
       </p>
 

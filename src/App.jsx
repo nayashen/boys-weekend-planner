@@ -1,95 +1,125 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
-import Sidebar from "./components/Sidebar";
-import BankStatement from "./pages/BankStatement";
+import { TripProvider } from "./context/TripContext";
+
+import MainLayout from "./layouts/MainLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+import Login from "./pages/Login";
+
 import Dashboard from "./pages/Dashboard";
 import Members from "./pages/Members";
 import Finance from "./pages/Finance";
 import Contributions from "./pages/Contributions";
+import Groceries from "./pages/Grocery";
 import Accommodation from "./pages/Accommodation";
-import Grocery from "./pages/Grocery";
+import Gallery from "./pages/Gallery";
 import Drinks from "./pages/Drinks";
 import Expenses from "./pages/Expenses";
 import Settings from "./pages/Settings";
-import Gallery from "./pages/Gallery";
 
 function App() {
   return (
     <BrowserRouter>
-      <div
-        style={{
-          display: "flex",
-          minHeight: "100vh",
-          backgroundColor: "#f3f4f6",
-        }}
-      >
-        <Sidebar />
+      <TripProvider>
+        <Routes>
 
-        <main
-          style={{
-            flex: 1,
-            minWidth: 0,
-          }}
-        >
-          <Routes>
+          {/* LOGIN PAGE */}
+          <Route
+            path="/login"
+            element={<Login />}
+          />
+
+          {/* PROTECTED APPLICATION */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          >
+
+            {/* DASHBOARD */}
             <Route
-              path="/"
+              index
               element={<Dashboard />}
             />
 
+            {/* MEMBERS */}
             <Route
-              path="/members"
+              path="members"
               element={<Members />}
             />
 
+            {/* FINANCE */}
             <Route
-              path="/finance"
+              path="finance"
               element={<Finance />}
             />
 
+            {/* CONTRIBUTIONS */}
             <Route
-              path="/contributions"
+              path="contributions"
               element={<Contributions />}
             />
 
+            {/* GROCERIES */}
             <Route
-              path="/bank-statement"
-              element={<BankStatement />}
+              path="groceries"
+              element={<Groceries />}
             />
 
+            {/* ACCOMMODATION */}
             <Route
-              path="/accommodation"
+              path="accommodation"
               element={<Accommodation />}
             />
 
+            {/* GALLERY */}
             <Route
-              path="/grocery"
-              element={<Grocery />}
-            />
-
-            <Route
-              path="/drinks"
-              element={<Drinks />}
-            />
-
-            <Route
-              path="/expenses"
-              element={<Expenses />}
-            />
-
-            {/* NEW GALLERY PAGE */}
-            <Route
-              path="/gallery"
+              path="gallery"
               element={<Gallery />}
             />
 
+            {/* DRINKS */}
             <Route
-              path="/settings"
+              path="drinks"
+              element={<Drinks />}
+            />
+
+            {/* EXPENSES */}
+            <Route
+              path="expenses"
+              element={<Expenses />}
+            />
+
+            {/* SETTINGS */}
+            <Route
+              path="settings"
               element={<Settings />}
             />
-          </Routes>
-        </main>
-      </div>
+
+          </Route>
+
+          {/* UNKNOWN ROUTES */}
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to="/"
+                replace
+              />
+            }
+          />
+
+        </Routes>
+      </TripProvider>
     </BrowserRouter>
   );
 }

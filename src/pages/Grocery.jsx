@@ -3,7 +3,7 @@ import { useTrip } from "../context/TripContext";
 
 function Grocery() {
   const {
-    groceries,
+    groceries = [],
     addGrocery,
     deleteGrocery,
     toggleGroceryPurchased,
@@ -23,23 +23,54 @@ function Grocery() {
     });
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    addGrocery({
+    console.log("FORM SUBMITTED");
+
+    const groceryData = {
       name: form.name,
       quantity: Number(form.quantity),
       price: Number(form.price),
       category: form.category,
       purchased: false,
-    });
+    };
 
-    setForm({
-      name: "",
-      quantity: "",
-      price: "",
-      category: "",
-    });
+    console.log(
+      "SENDING GROCERY:",
+      groceryData
+    );
+
+    try {
+      const result =
+        await addGrocery(groceryData);
+
+      console.log(
+        "ADD GROCERY RESULT:",
+        result
+      );
+
+      setForm({
+        name: "",
+        quantity: "",
+        price: "",
+        category: "",
+      });
+
+      alert(
+        "Grocery added successfully!"
+      );
+    } catch (error) {
+      console.error(
+        "ADD GROCERY ERROR:",
+        error
+      );
+
+      alert(
+        "Error adding grocery: " +
+          error.message
+      );
+    }
   }
 
   const totalCost = groceries.reduce(
@@ -51,7 +82,10 @@ function Grocery() {
   );
 
   const purchasedCost = groceries
-    .filter((grocery) => grocery.purchased)
+    .filter(
+      (grocery) =>
+        grocery.purchased === true
+    )
     .reduce(
       (total, grocery) =>
         total +
@@ -64,7 +98,11 @@ function Grocery() {
     totalCost - purchasedCost;
 
   return (
-    <div style={{ padding: "30px" }}>
+    <div
+      style={{
+        padding: "30px",
+      }}
+    >
       <h1>🛒 Grocery Planning</h1>
 
       {/* SUMMARY */}
@@ -102,16 +140,7 @@ function Grocery() {
 
       {/* ADD GROCERY */}
 
-      <div
-        style={{
-          background: "white",
-          padding: "25px",
-          borderRadius: "12px",
-          boxShadow:
-            "0 2px 8px rgba(0,0,0,0.1)",
-          marginBottom: "30px",
-        }}
-      >
+      <div style={cardStyle}>
         <h2>Add Grocery Item</h2>
 
         <form
@@ -128,7 +157,7 @@ function Grocery() {
             value={form.name}
             onChange={handleChange}
             required
-            style={{ padding: "12px" }}
+            style={inputStyle}
           />
 
           <input
@@ -139,7 +168,7 @@ function Grocery() {
             onChange={handleChange}
             min="1"
             required
-            style={{ padding: "12px" }}
+            style={inputStyle}
           />
 
           <input
@@ -151,7 +180,7 @@ function Grocery() {
             min="0"
             step="0.01"
             required
-            style={{ padding: "12px" }}
+            style={inputStyle}
           />
 
           <input
@@ -159,19 +188,13 @@ function Grocery() {
             placeholder="Category e.g. Meat, Snacks, Breakfast"
             value={form.category}
             onChange={handleChange}
-            style={{ padding: "12px" }}
+            required
+            style={inputStyle}
           />
 
           <button
             type="submit"
-            style={{
-              padding: "12px",
-              backgroundColor: "#2563eb",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-            }}
+            style={buttonStyle}
           >
             + Add Grocery Item
           </button>
@@ -182,11 +205,7 @@ function Grocery() {
 
       <div
         style={{
-          background: "white",
-          padding: "25px",
-          borderRadius: "12px",
-          boxShadow:
-            "0 2px 8px rgba(0,0,0,0.1)",
+          ...cardStyle,
           overflowX: "auto",
         }}
       >
@@ -200,7 +219,8 @@ function Grocery() {
           <table
             style={{
               width: "100%",
-              borderCollapse: "collapse",
+              borderCollapse:
+                "collapse",
               marginTop: "20px",
               minWidth: "750px",
             }}
@@ -208,7 +228,8 @@ function Grocery() {
             <thead>
               <tr
                 style={{
-                  background: "#f3f4f6",
+                  background:
+                    "#f3f4f6",
                   textAlign: "left",
                 }}
               >
@@ -243,98 +264,142 @@ function Grocery() {
             </thead>
 
             <tbody>
-              {groceries.map((grocery) => {
-                const itemTotal =
-                  Number(grocery.price || 0) *
-                  Number(
-                    grocery.quantity || 0
-                  );
+              {groceries.map(
+                (grocery) => {
+                  const itemTotal =
+                    Number(
+                      grocery.price || 0
+                    ) *
+                    Number(
+                      grocery.quantity ||
+                        0
+                    );
 
-                return (
-                  <tr key={grocery.id}>
-                    <td style={cellStyle}>
-                      <strong>
-                        {grocery.name}
-                      </strong>
-                    </td>
+                  return (
+                    <tr
+                      key={grocery.id}
+                    >
+                      <td
+                        style={
+                          cellStyle
+                        }
+                      >
+                        <strong>
+                          {
+                            grocery.name
+                          }
+                        </strong>
+                      </td>
 
-                    <td style={cellStyle}>
-                      {grocery.category ||
-                        "-"}
-                    </td>
+                      <td
+                        style={
+                          cellStyle
+                        }
+                      >
+                        {grocery.category ||
+                          "-"}
+                      </td>
 
-                    <td style={cellStyle}>
-                      {grocery.quantity}
-                    </td>
+                      <td
+                        style={
+                          cellStyle
+                        }
+                      >
+                        {
+                          grocery.quantity
+                        }
+                      </td>
 
-                    <td style={cellStyle}>
-                      R
-                      {Number(
-                        grocery.price || 0
-                      ).toLocaleString()}
-                    </td>
-
-                    <td style={cellStyle}>
-                      <strong>
+                      <td
+                        style={
+                          cellStyle
+                        }
+                      >
                         R
-                        {itemTotal.toLocaleString()}
-                      </strong>
-                    </td>
+                        {Number(
+                          grocery.price ||
+                            0
+                        ).toLocaleString()}
+                      </td>
 
-                    {/* PURCHASED BUTTON */}
-
-                    <td style={cellStyle}>
-                      <button
-                        onClick={() =>
-                          toggleGroceryPurchased(
-                            grocery.id
-                          )
+                      <td
+                        style={
+                          cellStyle
                         }
-                        style={{
-                          padding:
-                            "8px 12px",
-                          backgroundColor:
-                            grocery.purchased
-                              ? "#059669"
-                              : "#f59e0b",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "6px",
-                          cursor: "pointer",
-                        }}
                       >
-                        {grocery.purchased
-                          ? "✅ Purchased"
-                          : "⏳ Mark Purchased"}
-                      </button>
-                    </td>
+                        <strong>
+                          R
+                          {itemTotal.toLocaleString()}
+                        </strong>
+                      </td>
 
-                    {/* DELETE BUTTON */}
-
-                    <td style={cellStyle}>
-                      <button
-                        onClick={() =>
-                          deleteGrocery(
-                            grocery.id
-                          )
+                      <td
+                        style={
+                          cellStyle
                         }
-                        style={{
-                          padding:
-                            "8px 12px",
-                          backgroundColor:
-                            "#dc2626",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "6px",
-                          cursor: "pointer",
-                        }}
                       >
-                        🗑️ Delete
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                        <button
+                          onClick={() =>
+                            toggleGroceryPurchased(
+                              grocery.id
+                            )
+                          }
+                          style={{
+                            padding:
+                              "8px 12px",
+                            backgroundColor:
+                              grocery.purchased
+                                ? "#059669"
+                                : "#f59e0b",
+                            color:
+                              "white",
+                            border:
+                              "none",
+                            borderRadius:
+                              "6px",
+                            cursor:
+                              "pointer",
+                          }}
+                        >
+                          {grocery.purchased
+                            ? "✅ Purchased"
+                            : "⏳ Mark Purchased"}
+                        </button>
+                      </td>
+
+                      <td
+                        style={
+                          cellStyle
+                        }
+                      >
+                        <button
+                          onClick={() =>
+                            deleteGrocery(
+                              grocery.id
+                            )
+                          }
+                          style={{
+                            padding:
+                              "8px 12px",
+                            backgroundColor:
+                              "#dc2626",
+                            color:
+                              "white",
+                            border:
+                              "none",
+                            borderRadius:
+                              "6px",
+                            cursor:
+                              "pointer",
+                          }}
+                        >
+                          🗑️ Delete
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                }
+              )}
             </tbody>
           </table>
         )}
@@ -366,12 +431,42 @@ function SummaryCard({
         {title}
       </h3>
 
-      <h2 style={{ marginBottom: 0 }}>
+      <h2
+        style={{
+          marginBottom: 0,
+        }}
+      >
         {value}
       </h2>
     </div>
   );
 }
+
+const cardStyle = {
+  background: "white",
+  padding: "25px",
+  borderRadius: "12px",
+  boxShadow:
+    "0 2px 8px rgba(0,0,0,0.1)",
+  marginBottom: "30px",
+};
+
+const inputStyle = {
+  padding: "12px",
+  border: "1px solid #d1d5db",
+  borderRadius: "8px",
+  fontSize: "16px",
+};
+
+const buttonStyle = {
+  padding: "12px",
+  backgroundColor: "#2563eb",
+  color: "white",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "bold",
+};
 
 const cellStyle = {
   padding: "14px",
