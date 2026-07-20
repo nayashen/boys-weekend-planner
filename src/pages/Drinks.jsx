@@ -3,30 +3,62 @@ import { useTrip } from "../context/TripContext";
 
 function Drinks() {
   const {
-    drinks,
+    drinks = [],
     addDrink,
     deleteDrink,
     toggleDrinkPurchased,
+    tripSettings = {},
   } = useTrip();
+
+  const currency =
+    tripSettings?.currency || "R";
 
   const [form, setForm] = useState({
     name: "",
-    category: "",
-    quantity: "",
-    price: "",
+    category: "Beer",
+    quantity: 1,
+    price: 0,
   });
 
+  const totalCost = drinks.reduce(
+    (sum, drink) =>
+      sum +
+      Number(drink.price || 0) *
+        Number(drink.quantity || 0),
+    0
+  );
+
+  const purchasedCost = drinks
+    .filter((drink) => drink.purchased)
+    .reduce(
+      (sum, drink) =>
+        sum +
+        Number(drink.price || 0) *
+          Number(drink.quantity || 0),
+      0
+    );
+
+  const remainingCost =
+    totalCost - purchasedCost;
+
   function handleChange(event) {
-    setForm({
-      ...form,
-      [event.target.name]: event.target.value,
-    });
+    const { name, value } = event.target;
+
+    setForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    addDrink({
+    if (!form.name.trim()) {
+      alert("Please enter a drink name.");
+      return;
+    }
+
+    await addDrink({
       name: form.name,
       category: form.category,
       quantity: Number(form.quantity),
@@ -36,36 +68,31 @@ function Drinks() {
 
     setForm({
       name: "",
-      category: "",
-      quantity: "",
-      price: "",
+      category: "Beer",
+      quantity: 1,
+      price: 0,
     });
   }
 
-  const totalCost = drinks.reduce(
-    (total, drink) =>
-      total +
-      Number(drink.price || 0) *
-        Number(drink.quantity || 0),
-    0
-  );
-
-  const purchasedCost = drinks
-    .filter((drink) => drink.purchased)
-    .reduce(
-      (total, drink) =>
-        total +
-        Number(drink.price || 0) *
-          Number(drink.quantity || 0),
-      0
-    );
-
-  const remainingCost =
-    totalCost - purchasedCost;
-
   return (
-    <div style={{ padding: "30px" }}>
-      <h1>🍻 Drinks Planning</h1>
+    <div
+      style={{
+        padding: "30px",
+      }}
+    >
+      {/* HEADER */}
+
+      <h1>🍻 Drinks</h1>
+
+      <p
+        style={{
+          color: "#6b7280",
+        }}
+      >
+        Plan and track drinks for the weekend.
+      </p>
+
+      {/* SUMMARY */}
 
       <div
         style={{
@@ -79,17 +106,17 @@ function Drinks() {
       >
         <SummaryCard
           title="Total Drinks Budget"
-          value={`R${totalCost.toLocaleString()}`}
+          value={`${currency}${totalCost.toLocaleString()}`}
         />
 
         <SummaryCard
           title="Purchased"
-          value={`R${purchasedCost.toLocaleString()}`}
+          value={`${currency}${purchasedCost.toLocaleString()}`}
         />
 
         <SummaryCard
-          title="Remaining"
-          value={`R${remainingCost.toLocaleString()}`}
+          title="Still To Buy"
+          value={`${currency}${remainingCost.toLocaleString()}`}
         />
 
         <SummaryCard
@@ -98,81 +125,110 @@ function Drinks() {
         />
       </div>
 
+      {/* ADD DRINK */}
+
       <div
         style={{
           background: "white",
           padding: "25px",
           borderRadius: "12px",
           boxShadow:
-            "0 2px 8px rgba(0,0,0,0.1)",
+            "0 2px 8px rgba(0,0,0,0.08)",
           marginBottom: "30px",
         }}
       >
-        <h2>Add Drink Item</h2>
+        <h2>➕ Add Drink</h2>
 
         <form
           onSubmit={handleSubmit}
           style={{
             display: "grid",
-            gap: "12px",
-            maxWidth: "600px",
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: "15px",
+            alignItems: "end",
           }}
         >
-          <input
-            name="name"
-            placeholder="Drink Name"
-            value={form.name}
-            onChange={handleChange}
-            required
-            style={{ padding: "12px" }}
-          />
+          <div>
+            <label>Drink Name</label>
 
-          <input
-            name="category"
-            placeholder="Category e.g. Beer, Spirits, Mixers"
-            value={form.category}
-            onChange={handleChange}
-            style={{ padding: "12px" }}
-          />
+            <input
+              type="text"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="e.g. Castle Lager"
+              style={inputStyle}
+            />
+          </div>
 
-          <input
-            type="number"
-            name="quantity"
-            placeholder="Quantity"
-            value={form.quantity}
-            onChange={handleChange}
-            min="1"
-            required
-            style={{ padding: "12px" }}
-          />
+          <div>
+            <label>Category</label>
 
-          <input
-            type="number"
-            name="price"
-            placeholder="Price Per Item"
-            value={form.price}
-            onChange={handleChange}
-            min="0"
-            step="0.01"
-            required
-            style={{ padding: "12px" }}
-          />
+            <select
+              name="category"
+              value={form.category}
+              onChange={handleChange}
+              style={inputStyle}
+            >
+              <option>Beer</option>
+              <option>Cider</option>
+              <option>Spirits</option>
+              <option>Whisky</option>
+              <option>Brandy</option>
+              <option>Wine</option>
+              <option>Cooler</option>
+              <option>Soft Drinks</option>
+              <option>Water</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Quantity</label>
+
+            <input
+              type="number"
+              name="quantity"
+              min="1"
+              value={form.quantity}
+              onChange={handleChange}
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label>Price Each</label>
+
+            <input
+              type="number"
+              name="price"
+              min="0"
+              step="0.01"
+              value={form.price}
+              onChange={handleChange}
+              style={inputStyle}
+            />
+          </div>
 
           <button
             type="submit"
             style={{
-              padding: "12px",
-              backgroundColor: "#2563eb",
+              background: "#2563eb",
               color: "white",
               border: "none",
+              padding: "12px 20px",
               borderRadius: "8px",
               cursor: "pointer",
+              fontWeight: "bold",
             }}
           >
-            + Add Drink
+            Add Drink
           </button>
         </form>
       </div>
+
+      {/* DRINKS TABLE */}
 
       <div
         style={{
@@ -180,21 +236,23 @@ function Drinks() {
           padding: "25px",
           borderRadius: "12px",
           boxShadow:
-            "0 2px 8px rgba(0,0,0,0.1)",
+            "0 2px 8px rgba(0,0,0,0.08)",
           overflowX: "auto",
         }}
       >
-        <h2>Drinks List</h2>
+        <h2>🍺 Drinks List</h2>
 
         {drinks.length === 0 ? (
-          <p>No drinks added yet.</p>
+          <p>
+            No drinks have been added yet.
+          </p>
         ) : (
           <table
             style={{
               width: "100%",
               borderCollapse: "collapse",
               marginTop: "20px",
-              minWidth: "800px",
+              minWidth: "750px",
             }}
           >
             <thead>
@@ -229,14 +287,14 @@ function Drinks() {
                 </th>
 
                 <th style={cellStyle}>
-                  Action
+                  Actions
                 </th>
               </tr>
             </thead>
 
             <tbody>
               {drinks.map((drink) => {
-                const itemTotal =
+                const total =
                   Number(drink.price || 0) *
                   Number(drink.quantity || 0);
 
@@ -249,7 +307,7 @@ function Drinks() {
                     </td>
 
                     <td style={cellStyle}>
-                      {drink.category || "-"}
+                      {drink.category}
                     </td>
 
                     <td style={cellStyle}>
@@ -257,7 +315,7 @@ function Drinks() {
                     </td>
 
                     <td style={cellStyle}>
-                      R
+                      {currency}
                       {Number(
                         drink.price || 0
                       ).toLocaleString()}
@@ -265,8 +323,8 @@ function Drinks() {
 
                     <td style={cellStyle}>
                       <strong>
-                        R
-                        {itemTotal.toLocaleString()}
+                        {currency}
+                        {total.toLocaleString()}
                       </strong>
                     </td>
 
@@ -278,41 +336,43 @@ function Drinks() {
                           )
                         }
                         style={{
-                          padding:
-                            "8px 12px",
-                          backgroundColor:
-                            drink.purchased
-                              ? "#059669"
-                              : "#f59e0b",
-                          color: "white",
                           border: "none",
+                          padding: "7px 12px",
                           borderRadius: "6px",
                           cursor: "pointer",
+                          background:
+                            drink.purchased
+                              ? "#dcfce7"
+                              : "#fef3c7",
+                          color:
+                            drink.purchased
+                              ? "#166534"
+                              : "#92400e",
                         }}
                       >
                         {drink.purchased
                           ? "✅ Purchased"
-                          : "⏳ Mark Purchased"}
+                          : "⏳ To Buy"}
                       </button>
                     </td>
 
                     <td style={cellStyle}>
                       <button
                         onClick={() =>
-                          deleteDrink(drink.id)
+                          deleteDrink(
+                            drink.id
+                          )
                         }
                         style={{
-                          padding:
-                            "8px 12px",
-                          backgroundColor:
-                            "#dc2626",
+                          background: "#dc2626",
                           color: "white",
                           border: "none",
+                          padding: "7px 12px",
                           borderRadius: "6px",
                           cursor: "pointer",
                         }}
                       >
-                        🗑️ Delete
+                        Delete
                       </button>
                     </td>
                   </tr>
@@ -326,7 +386,10 @@ function Drinks() {
   );
 }
 
-function SummaryCard({ title, value }) {
+function SummaryCard({
+  title,
+  value,
+}) {
   return (
     <div
       style={{
@@ -334,7 +397,7 @@ function SummaryCard({ title, value }) {
         padding: "25px",
         borderRadius: "12px",
         boxShadow:
-          "0 2px 8px rgba(0,0,0,0.1)",
+          "0 2px 8px rgba(0,0,0,0.08)",
       }}
     >
       <h3
@@ -346,17 +409,29 @@ function SummaryCard({ title, value }) {
         {title}
       </h3>
 
-      <h2 style={{ marginBottom: 0 }}>
+      <h2
+        style={{
+          marginBottom: 0,
+        }}
+      >
         {value}
       </h2>
     </div>
   );
 }
 
+const inputStyle = {
+  width: "100%",
+  padding: "10px",
+  marginTop: "6px",
+  border: "1px solid #d1d5db",
+  borderRadius: "6px",
+  boxSizing: "border-box",
+};
+
 const cellStyle = {
   padding: "14px",
-  borderBottom:
-    "1px solid #e5e7eb",
+  borderBottom: "1px solid #e5e7eb",
 };
 
 export default Drinks;

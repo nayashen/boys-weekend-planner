@@ -19,20 +19,18 @@ function Finance() {
     linkTransactionToPayment,
   } = useTrip();
 
-  const { isAdmin, loading } =
-    useUserRole();
+  const { isAdmin, loading } = useUserRole();
 
   // =====================================================
   // MANUAL PAYMENT FORM
   // =====================================================
 
-  const [payment, setPayment] =
-    useState({
-      memberId: "",
-      amount: "",
-      contributionMonth: "",
-      date: "",
-    });
+  const [payment, setPayment] = useState({
+    memberId: "",
+    amount: "",
+    contributionMonth: "",
+    date: "",
+  });
 
   // =====================================================
   // LOADING
@@ -40,14 +38,8 @@ function Finance() {
 
   if (loading) {
     return (
-      <div
-        style={{
-          padding: "30px",
-        }}
-      >
-        <h2>
-          Loading Finance...
-        </h2>
+      <div style={{ padding: "30px" }}>
+        <h2>Loading Finance...</h2>
       </div>
     );
   }
@@ -59,8 +51,7 @@ function Finance() {
   function handleChange(event) {
     setPayment({
       ...payment,
-      [event.target.name]:
-        event.target.value,
+      [event.target.name]: event.target.value,
     });
   }
 
@@ -73,35 +64,22 @@ function Finance() {
 
     if (!isAdmin) return;
 
-    const selectedMember =
-      members.find(
-        (member) =>
-          String(member.id) ===
-          String(payment.memberId)
-      );
+    const selectedMember = members.find(
+      (member) =>
+        String(member.id) === String(payment.memberId)
+    );
 
     if (!selectedMember) {
-      alert(
-        "Please select a member."
-      );
-
+      alert("Please select a member.");
       return;
     }
 
-    const newPayment =
-      await addPayment({
-        memberId:
-          selectedMember.id,
-
-        amount:
-          Number(payment.amount),
-
-        contributionMonth:
-          payment.contributionMonth,
-
-        date:
-          payment.date,
-      });
+    const newPayment = await addPayment({
+      memberId: selectedMember.id,
+      amount: Number(payment.amount),
+      contributionMonth: payment.contributionMonth,
+      date: payment.date,
+    });
 
     if (!newPayment) {
       return;
@@ -114,36 +92,26 @@ function Finance() {
       date: "",
     });
 
-    alert(
-      "Payment recorded successfully."
-    );
+    alert("Payment recorded successfully.");
   }
 
   // =====================================================
   // DELETE PAYMENT
   // =====================================================
 
-  async function handleDeletePayment(
-    paymentId
-  ) {
+  async function handleDeletePayment(paymentId) {
     if (!isAdmin) return;
 
-    const confirmed =
-      window.confirm(
-        "Are you sure you want to delete this payment?"
-      );
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this payment?"
+    );
 
     if (!confirmed) return;
 
-    const success =
-      await deletePayment(
-        paymentId
-      );
+    const success = await deletePayment(paymentId);
 
     if (success) {
-      alert(
-        "Payment deleted successfully."
-      );
+      alert("Payment deleted successfully.");
     }
   }
 
@@ -151,73 +119,52 @@ function Finance() {
   // AUTOMATIC MEMBER MATCHING
   // =====================================================
 
-  function findMatchingMember(
-    description
-  ) {
-    const descriptionText =
-      String(
-        description || ""
-      ).toLowerCase();
+  function findMatchingMember(description) {
+    const descriptionText = String(description || "")
+      .toLowerCase();
 
-    return members.find(
-      (member) => {
-        const memberName =
-          String(
-            member.name || ""
-          )
-            .toLowerCase()
-            .trim();
+    return members.find((member) => {
+      const memberName = String(member.name || "")
+        .toLowerCase()
+        .trim();
 
-        if (!memberName) {
-          return false;
-        }
-
-        const nameParts =
-          memberName.split(
-            /\s+/
-          );
-
-        // FULL NAME MATCH
-        if (
-          nameParts.length > 1 &&
-          descriptionText.includes(
-            memberName
-          )
-        ) {
-          return true;
-        }
-
-        // FIRST NAME MATCH
-        const firstName =
-          nameParts[0];
-
-        if (
-          firstName.length >= 3 &&
-          descriptionText.includes(
-            firstName
-          )
-        ) {
-          return true;
-        }
-
-        // LAST NAME MATCH
-        const lastName =
-          nameParts[
-            nameParts.length - 1
-          ];
-
-        if (
-          lastName.length >= 3 &&
-          descriptionText.includes(
-            lastName
-          )
-        ) {
-          return true;
-        }
-
+      if (!memberName) {
         return false;
       }
-    );
+
+      const nameParts = memberName.split(/\s+/);
+
+      // Full name match
+      if (
+        nameParts.length > 1 &&
+        descriptionText.includes(memberName)
+      ) {
+        return true;
+      }
+
+      // First name match
+      const firstName = nameParts[0];
+
+      if (
+        firstName.length >= 3 &&
+        descriptionText.includes(firstName)
+      ) {
+        return true;
+      }
+
+      // Last name match
+      const lastName =
+        nameParts[nameParts.length - 1];
+
+      if (
+        lastName.length >= 3 &&
+        descriptionText.includes(lastName)
+      ) {
+        return true;
+      }
+
+      return false;
+    });
   }
 
   // =====================================================
@@ -231,9 +178,7 @@ function Finance() {
   ) {
     return [
       date,
-      description
-        .trim()
-        .toLowerCase(),
+      description.trim().toLowerCase(),
       Number(amount),
     ].join("|");
   }
@@ -256,13 +201,10 @@ function Finance() {
   // CSV IMPORT
   // =====================================================
 
-  function handleFileUpload(
-    event
-  ) {
+  function handleFileUpload(event) {
     if (!isAdmin) return;
 
-    const file =
-      event.target.files[0];
+    const file = event.target.files[0];
 
     if (!file) return;
 
@@ -270,37 +212,24 @@ function Finance() {
       header: true,
       skipEmptyLines: true,
 
-      complete: async (
-        results
-      ) => {
+      complete: async (results) => {
         let importedCount = 0;
-
         let matchedCount = 0;
-
         let duplicateCount = 0;
-
         let failedCount = 0;
 
-        for (
-          const row of results.data
-        ) {
-          const date =
-            String(
-              row.Date || ""
-            ).trim();
+        for (const row of results.data) {
+          const date = String(
+            row.Date || ""
+          ).trim();
 
-          const description =
-            String(
-              row.Description ||
-                ""
-            ).trim();
+          const description = String(
+            row.Description || ""
+          ).trim();
 
           const credit =
             Number(
-              String(
-                row.Credit ||
-                  ""
-              ).replace(
+              String(row.Credit || "").replace(
                 /[^0-9.-]/g,
                 ""
               )
@@ -308,26 +237,19 @@ function Finance() {
 
           const debit =
             Number(
-              String(
-                row.Debit ||
-                  ""
-              ).replace(
+              String(row.Debit || "").replace(
                 /[^0-9.-]/g,
                 ""
               )
             ) || 0;
 
           const amount =
-            credit > 0
-              ? credit
-              : debit;
+            credit > 0 ? credit : debit;
 
           const type =
-            credit > 0
-              ? "credit"
-              : "debit";
+            credit > 0 ? "credit" : "debit";
 
-          // IGNORE EMPTY ROWS
+          // Ignore empty rows
           if (
             !date ||
             !description ||
@@ -336,7 +258,7 @@ function Finance() {
             continue;
           }
 
-          // UNIQUE TRANSACTION KEY
+          // Unique transaction key
           const transactionKey =
             createTransactionKey(
               date,
@@ -344,18 +266,17 @@ function Finance() {
               amount
             );
 
-          // DUPLICATE CHECK
+          // Duplicate check
           if (
             transactionAlreadyImported(
               transactionKey
             )
           ) {
             duplicateCount++;
-
             continue;
           }
 
-          // MATCH MEMBER ONLY FOR CREDITS
+          // Match member only for credits
           const matchedMember =
             type === "credit"
               ? findMatchingMember(
@@ -363,54 +284,42 @@ function Finance() {
                 )
               : null;
 
-          // CREATE TRANSACTION OBJECT
+          // Create transaction
           const transaction = {
             date,
-
             description,
-
             amount,
-
             type,
 
-            memberId:
-              matchedMember
-                ? matchedMember.id
-                : "",
+            memberId: matchedMember
+              ? matchedMember.id
+              : null,
 
-            member:
-              matchedMember
-                ? matchedMember.name
-                : "",
+            member: matchedMember
+              ? matchedMember.name
+              : "",
 
-            status:
-              matchedMember
-                ? "matched"
-                : "unmatched",
+            status: matchedMember
+              ? "matched"
+              : "unmatched",
 
             transactionKey,
           };
 
-          // SAVE TRANSACTION TO SUPABASE
+          // Save transaction
           const savedTransaction =
             await addTransaction(
               transaction
             );
 
-          if (
-            !savedTransaction
-          ) {
+          if (!savedTransaction) {
             failedCount++;
-
             continue;
           }
 
           importedCount++;
 
-          // =====================================================
-          // AUTOMATIC PAYMENT CREATION
-          // =====================================================
-
+          // Automatically create payment
           if (
             matchedMember &&
             type === "credit"
@@ -423,36 +332,30 @@ function Finance() {
                 amount,
 
                 contributionMonth:
-                  date.substring(
-                    0,
-                    7
-                  ),
+                  date.substring(0, 7),
 
                 date,
               });
 
-            if (
-              newPayment
-            ) {
-              await linkTransactionToPayment(
-                savedTransaction.id,
-                newPayment.id
-              );
+            if (newPayment) {
+              const linked =
+                await linkTransactionToPayment(
+                  savedTransaction.id,
+                  newPayment.id
+                );
 
-              matchedCount++;
+              if (linked) {
+                matchedCount++;
+              }
             }
           }
         }
 
         alert(
           `Import complete!\n\n` +
-
             `Transactions imported: ${importedCount}\n` +
-
             `Payments automatically matched: ${matchedCount}\n` +
-
             `Duplicates skipped: ${duplicateCount}\n` +
-
             `Failed: ${failedCount}`
         );
       },
@@ -470,10 +373,9 @@ function Finance() {
   ) {
     if (!isAdmin) return;
 
-    const confirmed =
-      window.confirm(
-        "Delete this bank transaction?"
-      );
+    const confirmed = window.confirm(
+      "Delete this bank transaction?"
+    );
 
     if (!confirmed) return;
 
@@ -493,35 +395,24 @@ function Finance() {
   // SUMMARY
   // =====================================================
 
-  const totalPaid =
-    payments.reduce(
-      (
-        sum,
-        payment
-      ) =>
-        sum +
-        Number(
-          payment.amount || 0
-        ),
-      0
-    );
+  const totalPaid = payments.reduce(
+    (sum, payment) =>
+      sum +
+      Number(payment.amount || 0),
+    0
+  );
 
   const totalCredits =
     transactions
       .filter(
         (transaction) =>
-          transaction.type ===
-          "credit"
+          transaction.type === "credit"
       )
       .reduce(
-        (
-          sum,
-          transaction
-        ) =>
+        (sum, transaction) =>
           sum +
           Number(
-            transaction.amount ||
-              0
+            transaction.amount || 0
           ),
         0
       );
@@ -530,18 +421,13 @@ function Finance() {
     transactions
       .filter(
         (transaction) =>
-          transaction.type ===
-          "debit"
+          transaction.type === "debit"
       )
       .reduce(
-        (
-          sum,
-          transaction
-        ) =>
+        (sum, transaction) =>
           sum +
           Number(
-            transaction.amount ||
-              0
+            transaction.amount || 0
           ),
         0
       );
@@ -551,60 +437,34 @@ function Finance() {
   // =====================================================
 
   return (
-    <div
-      style={{
-        padding: "30px",
-      }}
-    >
-      <h1>
-        💰 Finance
-      </h1>
+    <div style={{ padding: "30px" }}>
+      <h1>💰 Finance</h1>
 
       {!isAdmin && (
         <div
           style={{
-            background:
-              "#dbeafe",
-
-            color:
-              "#1e40af",
-
-            padding:
-              "15px",
-
-            borderRadius:
-              "8px",
-
-            marginBottom:
-              "25px",
+            background: "#dbeafe",
+            color: "#1e40af",
+            padding: "15px",
+            borderRadius: "8px",
+            marginBottom: "25px",
           }}
         >
-          👁️ You are viewing
-          financial information
-          in read-only mode.
+          👁️ You are viewing financial
+          information in read-only mode.
         </div>
       )}
 
-      {/* =====================================================
-          SUMMARY CARDS
-      ===================================================== */}
+      {/* SUMMARY CARDS */}
 
       <div
         style={{
-          display:
-            "grid",
-
+          display: "grid",
           gridTemplateColumns:
             "repeat(auto-fit, minmax(220px, 1fr))",
-
-          gap:
-            "20px",
-
-          marginTop:
-            "20px",
-
-          marginBottom:
-            "30px",
+          gap: "20px",
+          marginTop: "20px",
+          marginBottom: "30px",
         }}
       >
         <SummaryCard
@@ -623,25 +483,15 @@ function Finance() {
         />
       </div>
 
-      {/* =====================================================
-          BANK STATEMENT IMPORT
-      ===================================================== */}
+      {/* BANK STATEMENT IMPORT */}
 
       {isAdmin && (
         <div
           style={{
-            background:
-              "white",
-
-            padding:
-              "25px",
-
-            borderRadius:
-              "10px",
-
-            marginBottom:
-              "30px",
-
+            background: "white",
+            padding: "25px",
+            borderRadius: "10px",
+            marginBottom: "30px",
             boxShadow:
               "0 2px 8px rgba(0,0,0,0.1)",
           }}
@@ -651,18 +501,13 @@ function Finance() {
           </h2>
 
           <p>
-            Upload a CSV bank
-            statement.
-          </p>
-
-          <p>
-            The system will:
+            Upload a CSV bank statement.
           </p>
 
           <ul>
             <li>
-              Automatically match
-              credits to members
+              Automatically match credits
+              to members
             </li>
 
             <li>
@@ -671,13 +516,12 @@ function Finance() {
             </li>
 
             <li>
-              Link the payment to
-              the bank transaction
+              Link the payment to the
+              bank transaction
             </li>
 
             <li>
-              Prevent duplicate
-              imports
+              Prevent duplicate imports
             </li>
           </ul>
 
@@ -701,52 +545,33 @@ function Finance() {
         </div>
       )}
 
-      {/* =====================================================
-          BANK TRANSACTIONS
-      ===================================================== */}
+      {/* BANK TRANSACTIONS */}
 
       <div
         style={{
-          background:
-            "white",
-
-          padding:
-            "25px",
-
-          borderRadius:
-            "10px",
-
-          marginBottom:
-            "30px",
-
+          background: "white",
+          padding: "25px",
+          borderRadius: "10px",
+          marginBottom: "30px",
           boxShadow:
             "0 2px 8px rgba(0,0,0,0.1)",
-
-          overflowX:
-            "auto",
+          overflowX: "auto",
         }}
       >
-        <h2>
-          🏦 Bank Transactions
-        </h2>
+        <h2>🏦 Bank Transactions</h2>
 
-        {transactions.length ===
-        0 ? (
+        {transactions.length === 0 ? (
           <p>
-            No bank transactions
-            imported yet.
+            No bank transactions imported
+            yet.
           </p>
         ) : (
           <table
             style={{
-              width:
-                "100%",
-
+              width: "100%",
               borderCollapse:
                 "collapse",
-
-              minWidth:
-                "950px",
+              minWidth: "950px",
             }}
           >
             <thead>
@@ -754,73 +579,39 @@ function Finance() {
                 style={{
                   background:
                     "#f3f4f6",
-
-                  textAlign:
-                    "left",
+                  textAlign: "left",
                 }}
               >
-                <th
-                  style={
-                    cellStyle
-                  }
-                >
+                <th style={cellStyle}>
                   Date
                 </th>
 
-                <th
-                  style={
-                    cellStyle
-                  }
-                >
+                <th style={cellStyle}>
                   Description
                 </th>
 
-                <th
-                  style={
-                    cellStyle
-                  }
-                >
+                <th style={cellStyle}>
                   Amount
                 </th>
 
-                <th
-                  style={
-                    cellStyle
-                  }
-                >
+                <th style={cellStyle}>
                   Type
                 </th>
 
-                <th
-                  style={
-                    cellStyle
-                  }
-                >
+                <th style={cellStyle}>
                   Member
                 </th>
 
-                <th
-                  style={
-                    cellStyle
-                  }
-                >
+                <th style={cellStyle}>
                   Status
                 </th>
 
-                <th
-                  style={
-                    cellStyle
-                  }
-                >
+                <th style={cellStyle}>
                   Payment
                 </th>
 
                 {isAdmin && (
-                  <th
-                    style={
-                      cellStyle
-                    }
-                  >
+                  <th style={cellStyle}>
                     Action
                   </th>
                 )}
@@ -829,29 +620,19 @@ function Finance() {
 
             <tbody>
               {transactions.map(
-                (
-                  transaction
-                ) => (
+                (transaction) => (
                   <tr
                     key={
                       transaction.id
                     }
                   >
-                    <td
-                      style={
-                        cellStyle
-                      }
-                    >
+                    <td style={cellStyle}>
                       {
                         transaction.date
                       }
                     </td>
 
-                    <td
-                      style={
-                        cellStyle
-                      }
-                    >
+                    <td style={cellStyle}>
                       {
                         transaction.description
                       }
@@ -860,10 +641,7 @@ function Finance() {
                     <td
                       style={{
                         ...cellStyle,
-
-                        fontWeight:
-                          "bold",
-
+                        fontWeight: "bold",
                         color:
                           transaction.type ===
                           "credit"
@@ -875,44 +653,32 @@ function Finance() {
                       "credit"
                         ? "+"
                         : "-"}
-
                       R
                       {Number(
                         transaction.amount
                       ).toLocaleString()}
                     </td>
 
-                    <td
-                      style={
-                        cellStyle
-                      }
-                    >
+                    <td style={cellStyle}>
                       {
                         transaction.type
                       }
                     </td>
 
-                    <td
-                      style={
-                        cellStyle
+                    <td style={cellStyle}>
+                      {
+                        transaction.member ||
+                        "Unmatched"
                       }
-                    >
-                      {transaction.member ||
-                        "Unmatched"}
                     </td>
 
-                    <td
-                      style={
-                        cellStyle
-                      }
-                    >
+                    <td style={cellStyle}>
                       {transaction.status ===
                       "matched" ? (
                         <span
                           style={{
                             color:
                               "#059669",
-
                             fontWeight:
                               "bold",
                           }}
@@ -931,17 +697,12 @@ function Finance() {
                       )}
                     </td>
 
-                    <td
-                      style={
-                        cellStyle
-                      }
-                    >
+                    <td style={cellStyle}>
                       {transaction.payment_id ? (
                         <span
                           style={{
                             color:
                               "#059669",
-
                             fontWeight:
                               "bold",
                           }}
@@ -961,11 +722,7 @@ function Finance() {
                     </td>
 
                     {isAdmin && (
-                      <td
-                        style={
-                          cellStyle
-                        }
-                      >
+                      <td style={cellStyle}>
                         <button
                           onClick={() =>
                             handleDeleteTransaction(
@@ -975,19 +732,12 @@ function Finance() {
                           style={{
                             padding:
                               "8px 12px",
-
                             backgroundColor:
                               "#dc2626",
-
-                            color:
-                              "white",
-
-                            border:
-                              "none",
-
+                            color: "white",
+                            border: "none",
                             borderRadius:
                               "6px",
-
                             cursor:
                               "pointer",
                           }}
@@ -1004,46 +754,31 @@ function Finance() {
         )}
       </div>
 
-      {/* =====================================================
-          MANUAL PAYMENT
-      ===================================================== */}
+      {/* MANUAL PAYMENT */}
 
       {isAdmin && (
         <div
           style={{
-            background:
-              "white",
-
-            padding:
-              "25px",
-
-            borderRadius:
-              "10px",
-
-            marginBottom:
-              "30px",
-
+            background: "white",
+            padding: "25px",
+            borderRadius: "10px",
+            marginBottom: "30px",
             boxShadow:
               "0 2px 8px rgba(0,0,0,0.1)",
           }}
         >
           <h2>
-            👤 Record Manual Member Contribution
+            👤 Record Manual Member
+            Contribution
           </h2>
 
           <form
-            onSubmit={
-              handleSubmit
-            }
+            onSubmit={handleSubmit}
             style={{
-              display:
-                "grid",
-
+              display: "grid",
               gridTemplateColumns:
                 "repeat(auto-fit, minmax(200px, 1fr))",
-
-              gap:
-                "15px",
+              gap: "15px",
             }}
           >
             <select
@@ -1055,29 +790,19 @@ function Finance() {
                 handleChange
               }
               required
-              style={
-                inputStyle
-              }
+              style={inputStyle}
             >
               <option value="">
                 Select Member
               </option>
 
               {members.map(
-                (
-                  member
-                ) => (
+                (member) => (
                   <option
-                    key={
-                      member.id
-                    }
-                    value={
-                      member.id
-                    }
+                    key={member.id}
+                    value={member.id}
                   >
-                    {
-                      member.name
-                    }
+                    {member.name}
                   </option>
                 )
               )}
@@ -1095,9 +820,7 @@ function Finance() {
               }
               required
               min="0"
-              style={
-                inputStyle
-              }
+              style={inputStyle}
             />
 
             <input
@@ -1110,9 +833,7 @@ function Finance() {
                 handleChange
               }
               required
-              style={
-                inputStyle
-              }
+              style={inputStyle}
             />
 
             <input
@@ -1125,9 +846,7 @@ function Finance() {
                 handleChange
               }
               required
-              style={
-                inputStyle
-              }
+              style={inputStyle}
             />
 
             <button
@@ -1135,19 +854,12 @@ function Finance() {
               style={{
                 padding:
                   "12px 20px",
-
                 backgroundColor:
                   "#2563eb",
-
-                color:
-                  "white",
-
-                border:
-                  "none",
-
+                color: "white",
+                border: "none",
                 borderRadius:
                   "8px",
-
                 cursor:
                   "pointer",
               }}
@@ -1158,56 +870,36 @@ function Finance() {
         </div>
       )}
 
-      {/* =====================================================
-          PAYMENT HISTORY
-      ===================================================== */}
+      {/* PAYMENT HISTORY */}
 
       <div
         style={{
-          background:
-            "white",
-
-          padding:
-            "25px",
-
-          borderRadius:
-            "10px",
-
+          background: "white",
+          padding: "25px",
+          borderRadius: "10px",
           boxShadow:
             "0 2px 8px rgba(0,0,0,0.1)",
         }}
       >
-        <h2>
-          💳 Payment History
-        </h2>
+        <h2>💳 Payment History</h2>
 
-        {payments.length ===
-        0 ? (
+        {payments.length === 0 ? (
           <p>
             No payments recorded.
           </p>
         ) : (
           payments.map(
-            (
-              payment
-            ) => (
+            (payment) => (
               <div
-                key={
-                  payment.id
-                }
+                key={payment.id}
                 style={{
-                  display:
-                    "flex",
-
+                  display: "flex",
                   justifyContent:
                     "space-between",
-
                   alignItems:
                     "center",
-
                   padding:
                     "15px 0",
-
                   borderBottom:
                     "1px solid #eee",
                 }}
@@ -1235,9 +927,7 @@ function Finance() {
 
                   {" • Paid on "}
 
-                  {
-                    payment.date
-                  }
+                  {payment.date}
                 </div>
 
                 {isAdmin && (
@@ -1250,19 +940,12 @@ function Finance() {
                     style={{
                       padding:
                         "8px 12px",
-
                       backgroundColor:
                         "#dc2626",
-
-                      color:
-                        "white",
-
-                      border:
-                        "none",
-
+                      color: "white",
+                      border: "none",
                       borderRadius:
                         "6px",
-
                       cursor:
                         "pointer",
                     }}
@@ -1290,31 +973,22 @@ function SummaryCard({
   return (
     <div
       style={{
-        background:
-          "white",
-
-        padding:
-          "20px",
-
-        borderRadius:
-          "10px",
-
+        background: "white",
+        padding: "20px",
+        borderRadius: "10px",
         boxShadow:
           "0 2px 8px rgba(0,0,0,0.1)",
       }}
     >
       <h3
         style={{
-          color:
-            "#6b7280",
+          color: "#6b7280",
         }}
       >
         {title}
       </h3>
 
-      <h2>
-        {value}
-      </h2>
+      <h2>{value}</h2>
     </div>
   );
 }
@@ -1324,20 +998,13 @@ function SummaryCard({
 // =====================================================
 
 const inputStyle = {
-  padding:
-    "12px",
-
-  borderRadius:
-    "6px",
-
-  border:
-    "1px solid #ccc",
+  padding: "12px",
+  borderRadius: "6px",
+  border: "1px solid #ccc",
 };
 
 const cellStyle = {
-  padding:
-    "14px",
-
+  padding: "14px",
   borderBottom:
     "1px solid #e5e7eb",
 };

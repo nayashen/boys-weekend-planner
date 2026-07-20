@@ -31,9 +31,19 @@ function Sidebar() {
       icon: "🛒",
     },
     {
+      name: "Drinks",
+      path: "/drinks",
+      icon: "🍻",
+    },
+    {
       name: "Accommodation",
       path: "/accommodation",
       icon: "🏠",
+    },
+    {
+      name: "Expenses",
+      path: "/expenses",
+      icon: "🧾",
     },
     {
       name: "Gallery",
@@ -92,6 +102,7 @@ function Sidebar() {
       }}
     >
       {/* LOGO / TITLE */}
+
       <h2
         style={{
           marginBottom: "30px",
@@ -103,6 +114,7 @@ function Sidebar() {
       </h2>
 
       {/* NAVIGATION */}
+
       <nav
         style={{
           flex: 1,
@@ -126,14 +138,19 @@ function Sidebar() {
                 : "transparent",
             })}
           >
-            <span>{item.icon}</span>
+            <span>
+              {item.icon}
+            </span>
 
-            <span>{item.name}</span>
+            <span>
+              {item.name}
+            </span>
           </NavLink>
         ))}
       </nav>
 
       {/* LOGOUT BUTTON */}
+
       <button
         onClick={handleLogout}
         style={{

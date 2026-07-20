@@ -9,6 +9,7 @@ function Dashboard() {
     accommodation = [],
     selectedAccommodation,
     groceries = [],
+    drinks = [],
     expenses = [],
   } = useTrip();
 
@@ -57,6 +58,33 @@ function Dashboard() {
           sum +
           Number(grocery.price || 0) *
             Number(grocery.quantity || 0),
+        0
+      );
+
+  // =========================
+  // DRINK COSTS
+  // =========================
+
+  const totalDrinkCost =
+    (drinks || []).reduce(
+      (sum, drink) =>
+        sum +
+        Number(drink.price || 0) *
+          Number(drink.quantity || 0),
+      0
+    );
+
+  const purchasedDrinkCost =
+    (drinks || [])
+      .filter(
+        (drink) =>
+          drink.purchased
+      )
+      .reduce(
+        (sum, drink) =>
+          sum +
+          Number(drink.price || 0) *
+            Number(drink.quantity || 0),
         0
       );
 
@@ -110,10 +138,10 @@ function Dashboard() {
       );
 
   // =========================
-  // ACTUAL MONEY SPENT
+  // BANK STATEMENT MONEY SPENT
   // =========================
 
-  const moneySpent =
+  const bankMoneySpent =
     validTransactions
       .filter(
         (transaction) =>
@@ -125,6 +153,20 @@ function Dashboard() {
           Number(transaction.amount || 0),
         0
       );
+
+  // =========================
+  // TOTAL ACTUAL MONEY SPENT
+  // =========================
+  //
+  // Bank statement debits
+  // + purchased groceries
+  // + purchased drinks
+  //
+
+  const moneySpent =
+    bankMoneySpent +
+    purchasedGroceryCost +
+    purchasedDrinkCost;
 
   // =========================
   // CURRENT BALANCE
@@ -140,6 +182,7 @@ function Dashboard() {
   const plannedCosts =
     accommodationCost +
     totalGroceryCost +
+    totalDrinkCost +
     totalOtherExpenses;
 
   // =========================
@@ -158,7 +201,8 @@ function Dashboard() {
   );
 
   const totalTarget =
-    members.length * targetPerPerson;
+    members.length *
+    targetPerPerson;
 
   // =========================
   // TOTAL CONTRIBUTIONS
@@ -231,6 +275,7 @@ function Dashboard() {
         padding: "30px",
       }}
     >
+
       {/* HEADER */}
 
       <h1>
@@ -265,6 +310,7 @@ function Dashboard() {
           marginTop: "20px",
         }}
       >
+
         <DashboardCard
           icon="💵"
           title="Current Balance"
@@ -312,6 +358,13 @@ function Dashboard() {
         />
 
         <DashboardCard
+          icon="🍻"
+          title="Planned Drinks"
+          value={`${currency}${totalDrinkCost.toLocaleString()}`}
+          valueColor="#0891b2"
+        />
+
+        <DashboardCard
           icon="🧾"
           title="Other Expenses"
           value={`${currency}${totalOtherExpenses.toLocaleString()}`}
@@ -328,6 +381,7 @@ function Dashboard() {
               : "#059669"
           }
         />
+
       </div>
 
       {/* TRIP COST SUMMARY */}
@@ -342,6 +396,7 @@ function Dashboard() {
             "0 2px 8px rgba(0,0,0,0.08)",
         }}
       >
+
         <h2>
           🧳 Trip Cost Summary
         </h2>
@@ -367,6 +422,22 @@ function Dashboard() {
           <strong>
             {currency}
             {purchasedGroceryCost.toLocaleString()}
+          </strong>
+        </p>
+
+        <p>
+          🍻 Total Drinks Budget:{" "}
+          <strong>
+            {currency}
+            {totalDrinkCost.toLocaleString()}
+          </strong>
+        </p>
+
+        <p>
+          ✅ Purchased Drinks:{" "}
+          <strong>
+            {currency}
+            {purchasedDrinkCost.toLocaleString()}
           </strong>
         </p>
 
@@ -398,6 +469,7 @@ function Dashboard() {
           {currency}
           {projectedBalance.toLocaleString()}
         </h3>
+
       </div>
 
       {/* CONTRIBUTION PROGRESS */}
@@ -419,6 +491,7 @@ function Dashboard() {
           marginTop: "20px",
         }}
       >
+
         <DashboardCard
           icon="🎯"
           title="Total Target"
@@ -454,6 +527,7 @@ function Dashboard() {
               : "#059669"
           }
         />
+
       </div>
 
       {/* TRANSACTION SUMMARY */}
@@ -468,6 +542,7 @@ function Dashboard() {
             "0 2px 8px rgba(0,0,0,0.08)",
         }}
       >
+
         <h2>
           🏦 Bank Statement Summary
         </h2>
@@ -500,7 +575,9 @@ function Dashboard() {
             {debitCount}
           </strong>
         </p>
+
       </div>
+
     </div>
   );
 }
@@ -521,6 +598,7 @@ function DashboardCard({
           "0 2px 8px rgba(0,0,0,0.08)",
       }}
     >
+
       <div
         style={{
           fontSize: "28px",
@@ -546,6 +624,7 @@ function DashboardCard({
       >
         {value}
       </h2>
+
     </div>
   );
 }

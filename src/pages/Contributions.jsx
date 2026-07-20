@@ -28,23 +28,35 @@ function Contributions() {
     0
   );
 
-  // Get unique months from payments
+  // =====================================================
+  // GET UNIQUE CONTRIBUTION MONTHS
+  // =====================================================
+
   const months = [
     ...new Set(
       payments
         .map(
           (payment) =>
-            payment.contributionMonth
+            payment.contribution_month
         )
         .filter(Boolean)
     ),
-  ];
+  ].sort();
 
   return (
-    <div style={{ padding: "30px" }}>
-      <h1>💳 Contributions</h1>
+    <div
+      style={{
+        padding: "30px",
+      }}
+    >
+      <h1>
+        💳 Contributions
+      </h1>
 
-      {/* SUMMARY */}
+      {/* =====================================================
+          SUMMARY
+      ===================================================== */}
+
       <div
         style={{
           display: "grid",
@@ -71,7 +83,10 @@ function Contributions() {
         />
       </div>
 
-      {/* MEMBER CONTRIBUTIONS */}
+      {/* =====================================================
+          MEMBER CONTRIBUTIONS
+      ===================================================== */}
+
       <div
         style={{
           background: "white",
@@ -82,7 +97,9 @@ function Contributions() {
           overflowX: "auto",
         }}
       >
-        <h2>Member Contribution Summary</h2>
+        <h2>
+          Member Contribution Summary
+        </h2>
 
         <table
           style={{
@@ -112,7 +129,7 @@ function Contributions() {
                   key={month}
                   style={cellStyle}
                 >
-                  {month}
+                  {formatMonth(month)}
                 </th>
               ))}
 
@@ -128,11 +145,13 @@ function Contributions() {
 
           <tbody>
             {members.map((member) => {
+              // IMPORTANT:
+              // Supabase returns member_id
               const memberPayments =
                 payments.filter(
                   (payment) =>
                     String(
-                      payment.memberId
+                      payment.member_id
                     ) ===
                     String(member.id)
                 );
@@ -155,46 +174,79 @@ function Contributions() {
                 );
 
               return (
-                <tr key={member.id}>
-                  <td style={cellStyle}>
+                <tr
+                  key={member.id}
+                >
+                  {/* MEMBER */}
+
+                  <td
+                    style={cellStyle}
+                  >
                     <strong>
                       {member.name}
                     </strong>
                   </td>
 
-                  <td style={cellStyle}>
+                  {/* TARGET */}
+
+                  <td
+                    style={cellStyle}
+                  >
                     {currency}
                     {targetPerPerson.toLocaleString()}
                   </td>
 
-                  {months.map((month) => {
-                    const monthlyTotal =
-                      memberPayments
-                        .filter(
-                          (payment) =>
-                            payment.contributionMonth ===
-                            month
-                        )
-                        .reduce(
-                          (sum, payment) =>
-                            sum +
-                            Number(
-                              payment.amount ||
-                                0
-                            ),
-                          0
-                        );
+                  {/* MONTHLY PAYMENTS */}
 
-                    return (
-                      <td
-                        key={month}
-                        style={cellStyle}
-                      >
-                        {currency}
-                        {monthlyTotal.toLocaleString()}
-                      </td>
-                    );
-                  })}
+                  {months.map(
+                    (month) => {
+                      const monthlyTotal =
+                        memberPayments
+                          .filter(
+                            (payment) =>
+                              payment.contribution_month ===
+                              month
+                          )
+                          .reduce(
+                            (
+                              sum,
+                              payment
+                            ) =>
+                              sum +
+                              Number(
+                                payment.amount ||
+                                  0
+                              ),
+                            0
+                          );
+
+                      return (
+                        <td
+                          key={month}
+                          style={{
+                            ...cellStyle,
+
+                            color:
+                              monthlyTotal >
+                              0
+                                ? "#059669"
+                                : "#6b7280",
+
+                            fontWeight:
+                              monthlyTotal >
+                              0
+                                ? "bold"
+                                : "normal",
+                          }}
+                        >
+                          {currency}
+                          {monthlyTotal.toLocaleString()}
+                        </td>
+                      );
+                    }
+                  )}
+
+                  {/* TOTAL PAID */}
 
                   <td
                     style={{
@@ -207,13 +259,18 @@ function Contributions() {
                     {memberTotalPaid.toLocaleString()}
                   </td>
 
+                  {/* OUTSTANDING */}
+
                   <td
                     style={{
                       ...cellStyle,
+
                       color:
-                        memberOutstanding > 0
+                        memberOutstanding >
+                        0
                           ? "#dc2626"
                           : "#059669",
+
                       fontWeight: "bold",
                     }}
                   >
@@ -231,12 +288,63 @@ function Contributions() {
             No members have been added yet.
           </p>
         )}
+
+        {members.length > 0 &&
+          payments.length === 0 && (
+            <p>
+              No contributions have been
+              recorded yet.
+            </p>
+          )}
       </div>
     </div>
   );
 }
 
-function SummaryCard({ title, value }) {
+// =====================================================
+// FORMAT MONTH
+// =====================================================
+
+function formatMonth(month) {
+  if (!month) {
+    return "";
+  }
+
+  const parts =
+    month.split("-");
+
+  if (parts.length !== 2) {
+    return month;
+  }
+
+  const year =
+    Number(parts[0]);
+
+  const monthNumber =
+    Number(parts[1]);
+
+  const date = new Date(
+    year,
+    monthNumber - 1
+  );
+
+  return date.toLocaleDateString(
+    "en-ZA",
+    {
+      month: "long",
+      year: "numeric",
+    }
+  );
+}
+
+// =====================================================
+// SUMMARY CARD
+// =====================================================
+
+function SummaryCard({
+  title,
+  value,
+}) {
   return (
     <div
       style={{
@@ -256,16 +364,25 @@ function SummaryCard({ title, value }) {
         {title}
       </h3>
 
-      <h2 style={{ marginBottom: 0 }}>
+      <h2
+        style={{
+          marginBottom: 0,
+        }}
+      >
         {value}
       </h2>
     </div>
   );
 }
 
+// =====================================================
+// TABLE CELL STYLE
+// =====================================================
+
 const cellStyle = {
   padding: "14px",
-  borderBottom: "1px solid #e5e7eb",
+  borderBottom:
+    "1px solid #e5e7eb",
 };
 
 export default Contributions;

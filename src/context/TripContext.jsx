@@ -18,52 +18,40 @@ export function TripProvider({ children }) {
   const [payments, setPayments] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [groceries, setGroceries] = useState([]);
+  const [drinks, setDrinks] = useState([]);
 
-  const [tripSettings, setTripSettings] =
-    useState(() => {
-      const saved =
-        localStorage.getItem("tripSettings");
+  const [tripSettings, setTripSettings] = useState(() => {
+    const saved = localStorage.getItem("tripSettings");
 
-      return saved
-        ? JSON.parse(saved)
-        : {
-            targetContribution: 0,
-            currency: "R",
-          };
-    });
+    return saved
+      ? JSON.parse(saved)
+      : {
+          targetContribution: 0,
+          currency: "R",
+        };
+  });
 
-  const [expenses, setExpenses] =
-    useState(() => {
-      const saved =
-        localStorage.getItem("expenses");
+  const [expenses, setExpenses] = useState(() => {
+    const saved = localStorage.getItem("expenses");
 
-      return saved
-        ? JSON.parse(saved)
-        : [];
-    });
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  const [accommodation, setAccommodation] =
-    useState(() => {
-      const saved =
-        localStorage.getItem("accommodation");
+  const [accommodation, setAccommodation] = useState(() => {
+    const saved = localStorage.getItem("accommodation");
 
-      return saved
-        ? JSON.parse(saved)
-        : [];
-    });
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const [
     selectedAccommodation,
     setSelectedAccommodation,
   ] = useState(() => {
-    const saved =
-      localStorage.getItem(
-        "selectedAccommodation"
-      );
+    const saved = localStorage.getItem(
+      "selectedAccommodation"
+    );
 
-    return saved
-      ? JSON.parse(saved)
-      : null;
+    return saved ? JSON.parse(saved) : null;
   });
 
   // =====================================================
@@ -163,6 +151,30 @@ export function TripProvider({ children }) {
   }
 
   // =====================================================
+  // LOAD DRINKS
+  // =====================================================
+
+  async function loadDrinks() {
+    const { data, error } = await supabase
+      .from("drinks")
+      .select("*")
+      .order("created_at", {
+        ascending: true,
+      });
+
+    if (error) {
+      console.error(
+        "Error loading drinks:",
+        error
+      );
+
+      return;
+    }
+
+    setDrinks(data || []);
+  }
+
+  // =====================================================
   // INITIAL LOAD
   // =====================================================
 
@@ -171,14 +183,11 @@ export function TripProvider({ children }) {
     loadPayments();
     loadTransactions();
     loadGroceries();
+    loadDrinks();
   }, []);
 
   // =====================================================
-  // SUPABASE REALTIME
-  //
-  // IMPORTANT:
-  // ALL .on() CALLBACKS ARE REGISTERED
-  // BEFORE .subscribe()
+  // REALTIME
   // =====================================================
 
   useEffect(() => {
@@ -235,9 +244,21 @@ export function TripProvider({ children }) {
         () => {
           loadGroceries();
         }
+      )
+
+      // DRINKS
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "drinks",
+        },
+        () => {
+          loadDrinks();
+        }
       );
 
-    // SUBSCRIBE ONLY AFTER ALL .on() CALLBACKS
     channel.subscribe();
 
     return () => {
@@ -284,7 +305,7 @@ export function TripProvider({ children }) {
   // =====================================================
 
   async function addMember(member) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("members")
       .insert([
         {
@@ -297,14 +318,10 @@ export function TripProvider({ children }) {
               0
           ),
         },
-      ]);
+      ])
+      .select();
 
     if (error) {
-      console.error(
-        "Error adding member:",
-        error
-      );
-
       alert(
         "Could not add member: " +
           error.message
@@ -313,23 +330,36 @@ export function TripProvider({ children }) {
       return false;
     }
 
+    await loadMembers();
+
     return true;
   }
 
   async function deleteMember(id) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("members")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .select();
 
     if (error) {
       alert(
-        "Could not delete member: " +
+        "Could not delete member:\n\n" +
           error.message
       );
 
       return false;
     }
+
+    if (!data || data.length === 0) {
+      alert(
+        "No member was deleted. Check Supabase permissions."
+      );
+
+      return false;
+    }
+
+    await loadMembers();
 
     return true;
   }
@@ -362,6 +392,8 @@ export function TripProvider({ children }) {
       return false;
     }
 
+    await loadMembers();
+
     return true;
   }
 
@@ -370,7 +402,7 @@ export function TripProvider({ children }) {
   // =====================================================
 
   async function addPayment(payment) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("payments")
       .insert([
         {
@@ -381,23 +413,22 @@ export function TripProvider({ children }) {
             payment.contributionMonth ||
             null,
         },
-      ]);
+      ])
+      .select()
+      .single();
 
     if (error) {
-      console.error(
-        "Error adding payment:",
-        error
-      );
-
       alert(
         "Could not add payment: " +
           error.message
       );
 
-      return false;
+      return null;
     }
 
-    return true;
+    await loadPayments();
+
+    return data;
   }
 
   async function deletePayment(id) {
@@ -407,13 +438,15 @@ export function TripProvider({ children }) {
       .eq("id", id);
 
     if (error) {
-      console.error(
-        "Error deleting payment:",
-        error
+      alert(
+        "Could not delete payment: " +
+          error.message
       );
 
       return false;
     }
+
+    await loadPayments();
 
     return true;
   }
@@ -425,7 +458,7 @@ export function TripProvider({ children }) {
   async function addTransaction(
     transaction
   ) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("transactions")
       .insert([
         {
@@ -456,34 +489,71 @@ export function TripProvider({ children }) {
             transaction.transactionKey ||
             null,
         },
-      ]);
+      ])
+      .select()
+      .single();
 
     if (error) {
-      console.error(
-        "Error adding transaction:",
-        error
+      alert(
+        "Could not add transaction: " +
+          error.message
       );
 
-      return false;
+      return null;
     }
 
-    return true;
+    await loadTransactions();
+
+    return data;
   }
 
-  async function deleteTransaction(id) {
+  async function deleteTransaction(
+    id
+  ) {
     const { error } = await supabase
       .from("transactions")
       .delete()
       .eq("id", id);
 
     if (error) {
-      console.error(
-        "Error deleting transaction:",
-        error
+      alert(
+        "Could not delete transaction: " +
+          error.message
       );
 
       return false;
     }
+
+    await loadTransactions();
+
+    return true;
+  }
+
+  // =====================================================
+  // LINK TRANSACTION TO PAYMENT
+  // =====================================================
+
+  async function linkTransactionToPayment(
+    transactionId,
+    paymentId
+  ) {
+    const { error } = await supabase
+      .from("transactions")
+      .update({
+        payment_id: paymentId,
+      })
+      .eq("id", transactionId);
+
+    if (error) {
+      alert(
+        "Could not link transaction to payment: " +
+          error.message
+      );
+
+      return false;
+    }
+
+    await loadTransactions();
 
     return true;
   }
@@ -492,7 +562,9 @@ export function TripProvider({ children }) {
   // GROCERIES
   // =====================================================
 
-  async function addGrocery(grocery) {
+  async function addGrocery(
+    grocery
+  ) {
     const { error } = await supabase
       .from("groceries")
       .insert([
@@ -520,23 +592,29 @@ export function TripProvider({ children }) {
       return false;
     }
 
+    await loadGroceries();
+
     return true;
   }
 
-  async function deleteGrocery(id) {
+  async function deleteGrocery(
+    id
+  ) {
     const { error } = await supabase
       .from("groceries")
       .delete()
       .eq("id", id);
 
     if (error) {
-      console.error(
-        "Error deleting grocery:",
-        error
+      alert(
+        "Could not delete grocery: " +
+          error.message
       );
 
       return false;
     }
+
+    await loadGroceries();
 
     return true;
   }
@@ -551,7 +629,9 @@ export function TripProvider({ children }) {
           String(id)
       );
 
-    if (!grocery) return false;
+    if (!grocery) {
+      return false;
+    }
 
     const { error } = await supabase
       .from("groceries")
@@ -562,13 +642,112 @@ export function TripProvider({ children }) {
       .eq("id", id);
 
     if (error) {
-      console.error(
-        "Error updating grocery:",
-        error
+      alert(
+        "Could not update grocery: " +
+          error.message
       );
 
       return false;
     }
+
+    await loadGroceries();
+
+    return true;
+  }
+
+  // =====================================================
+  // DRINKS
+  // =====================================================
+
+  async function addDrink(
+    drink
+  ) {
+    const { error } = await supabase
+      .from("drinks")
+      .insert([
+        {
+          name: drink.name,
+          category:
+            drink.category || "",
+          quantity: Number(
+            drink.quantity
+          ),
+          price: Number(
+            drink.price
+          ),
+          purchased:
+            drink.purchased || false,
+        },
+      ]);
+
+    if (error) {
+      alert(
+        "Could not add drink: " +
+          error.message
+      );
+
+      return false;
+    }
+
+    await loadDrinks();
+
+    return true;
+  }
+
+  async function deleteDrink(
+    id
+  ) {
+    const { error } = await supabase
+      .from("drinks")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      alert(
+        "Could not delete drink: " +
+          error.message
+      );
+
+      return false;
+    }
+
+    await loadDrinks();
+
+    return true;
+  }
+
+  async function toggleDrinkPurchased(
+    id
+  ) {
+    const drink =
+      drinks.find(
+        (item) =>
+          String(item.id) ===
+          String(id)
+      );
+
+    if (!drink) {
+      return false;
+    }
+
+    const { error } = await supabase
+      .from("drinks")
+      .update({
+        purchased:
+          !drink.purchased,
+      })
+      .eq("id", id);
+
+    if (error) {
+      alert(
+        "Could not update drink: " +
+          error.message
+      );
+
+      return false;
+    }
+
+    await loadDrinks();
 
     return true;
   }
@@ -577,7 +756,9 @@ export function TripProvider({ children }) {
   // SETTINGS
   // =====================================================
 
-  function updateTripSettings(settings) {
+  function updateTripSettings(
+    settings
+  ) {
     setTripSettings(settings);
   }
 
@@ -585,25 +766,34 @@ export function TripProvider({ children }) {
   // EXPENSES
   // =====================================================
 
-  function addExpense(expense) {
+  function addExpense(
+    expense
+  ) {
     const newExpense = {
       ...expense,
       id: Date.now(),
     };
 
-    setExpenses((previous) => [
-      ...previous,
-      newExpense,
-    ]);
+    setExpenses(
+      (previous) => [
+        ...previous,
+        newExpense,
+      ]
+    );
   }
 
-  function deleteExpense(id) {
-    setExpenses((previous) =>
-      previous.filter(
-        (expense) =>
-          String(expense.id) !==
-          String(id)
-      )
+  function deleteExpense(
+    id
+  ) {
+    setExpenses(
+      (previous) =>
+        previous.filter(
+          (expense) =>
+            String(
+              expense.id
+            ) !==
+            String(id)
+        )
     );
   }
 
@@ -611,30 +801,43 @@ export function TripProvider({ children }) {
   // ACCOMMODATION
   // =====================================================
 
-  function addAccommodation(option) {
+  function addAccommodation(
+    option
+  ) {
     const newOption = {
       ...option,
       id: Date.now(),
     };
 
-    setAccommodation((previous) => [
-      ...previous,
-      newOption,
-    ]);
-  }
-
-  function deleteAccommodation(id) {
-    setAccommodation((previous) =>
-      previous.filter(
-        (option) =>
-          String(option.id) !==
-          String(id)
-      )
+    setAccommodation(
+      (previous) => [
+        ...previous,
+        newOption,
+      ]
     );
   }
 
-  function selectAccommodation(id) {
-    setSelectedAccommodation(id);
+  function deleteAccommodation(
+    id
+  ) {
+    setAccommodation(
+      (previous) =>
+        previous.filter(
+          (option) =>
+            String(
+              option.id
+            ) !==
+            String(id)
+        )
+    );
+  }
+
+  function selectAccommodation(
+    id
+  ) {
+    setSelectedAccommodation(
+      id
+    );
   }
 
   // =====================================================
@@ -659,6 +862,7 @@ export function TripProvider({ children }) {
         transactions,
         addTransaction,
         deleteTransaction,
+        linkTransactionToPayment,
 
         // SETTINGS
         tripSettings,
@@ -669,6 +873,12 @@ export function TripProvider({ children }) {
         addGrocery,
         deleteGrocery,
         toggleGroceryPurchased,
+
+        // DRINKS
+        drinks,
+        addDrink,
+        deleteDrink,
+        toggleDrinkPurchased,
 
         // EXPENSES
         expenses,
@@ -689,5 +899,7 @@ export function TripProvider({ children }) {
 }
 
 export function useTrip() {
-  return useContext(TripContext);
+  return useContext(
+    TripContext
+  );
 }
