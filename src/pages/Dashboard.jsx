@@ -1,12 +1,12 @@
 import { useTrip } from "../context/TripContext";
 
-import DashboardHero from "../components/dashboard/DashboardHero";
-import FinancialOverview from "../components/dashboard/FinancialOverview";
-import ContributionProgress from "../components/dashboard/ContributionProgress";
-import TripSummary from "../components/dashboard/TripSummary";
-import BankSummary from "../components/dashboard/BankSummary";
-import QuickActions from "../components/dashboard/QuickActions";
-import RecentActivity from "../components/dashboard/RecentActivity";
+import DashboardHero from "../components/Dashboard/DashboardHero";
+import FinancialOverview from "../components/Dashboard/FinancialOverview";
+import ContributionProgress from "../components/Dashboard/ContributionProgress";
+import TripSummary from "../components/Dashboard/TripSummary";
+import BankSummary from "../components/Dashboard/BankSummary";
+import QuickActions from "../components/Dashboard/QuickActions";
+import RecentActivity from "../components/Dashboard/RecentActivity";
 
 function Dashboard() {
   const {
