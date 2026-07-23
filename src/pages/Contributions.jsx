@@ -1,4 +1,5 @@
 import { useTrip } from "../context/TripContext";
+import { useUserRole } from "../hooks/useUserRole";
 
 function Contributions() {
   const {
@@ -6,6 +7,16 @@ function Contributions() {
     payments,
     tripSettings,
   } = useTrip();
+
+  const { isAdmin, loading } = useUserRole();
+
+  if (loading) {
+    return (
+      <div style={{ padding: "30px" }}>
+        <h2>Loading Contributions...</h2>
+      </div>
+    );
+  }
 
   const currency =
     tripSettings.currency || "R";
@@ -52,6 +63,27 @@ function Contributions() {
       <h1>
         💳 Contributions
       </h1>
+
+      {!isAdmin && (
+        <div
+          style={{
+            background: "#eff6ff",
+            color: "#1d4ed8",
+            border: "1px solid #bfdbfe",
+            padding: "15px",
+            borderRadius: "10px",
+            marginTop: "20px",
+            marginBottom: "25px",
+            fontWeight: "600",
+          }}
+        >
+          👁️ Member Access — You can
+          view all contribution
+          information but only
+          administrators can make
+          changes.
+        </div>
+      )}
 
       {/* =====================================================
           SUMMARY
@@ -145,8 +177,6 @@ function Contributions() {
 
           <tbody>
             {members.map((member) => {
-              // IMPORTANT:
-              // Supabase returns member_id
               const memberPayments =
                 payments.filter(
                   (payment) =>
@@ -174,29 +204,17 @@ function Contributions() {
                 );
 
               return (
-                <tr
-                  key={member.id}
-                >
-                  {/* MEMBER */}
-
-                  <td
-                    style={cellStyle}
-                  >
+                <tr key={member.id}>
+                  <td style={cellStyle}>
                     <strong>
                       {member.name}
                     </strong>
                   </td>
 
-                  {/* TARGET */}
-
-                  <td
-                    style={cellStyle}
-                  >
+                  <td style={cellStyle}>
                     {currency}
                     {targetPerPerson.toLocaleString()}
                   </td>
-
-                  {/* MONTHLY PAYMENTS */}
 
                   {months.map(
                     (month) => {
@@ -225,13 +243,11 @@ function Contributions() {
                           key={month}
                           style={{
                             ...cellStyle,
-
                             color:
                               monthlyTotal >
                               0
                                 ? "#059669"
                                 : "#6b7280",
-
                             fontWeight:
                               monthlyTotal >
                               0
@@ -246,8 +262,6 @@ function Contributions() {
                     }
                   )}
 
-                  {/* TOTAL PAID */}
-
                   <td
                     style={{
                       ...cellStyle,
@@ -259,18 +273,14 @@ function Contributions() {
                     {memberTotalPaid.toLocaleString()}
                   </td>
 
-                  {/* OUTSTANDING */}
-
                   <td
                     style={{
                       ...cellStyle,
-
                       color:
                         memberOutstanding >
                         0
                           ? "#dc2626"
                           : "#059669",
-
                       fontWeight: "bold",
                     }}
                   >
@@ -285,80 +295,70 @@ function Contributions() {
 
         {members.length === 0 && (
           <p>
-            No members have been added yet.
+            No members have been added
+            yet.
           </p>
         )}
 
         {members.length > 0 &&
           payments.length === 0 && (
             <p>
-              No contributions have been
-              recorded yet.
+              No contributions have
+              been recorded yet.
             </p>
           )}
       </div>
     </div>
   );
 }
-
 // =====================================================
 // FORMAT MONTH
 // =====================================================
 
 function formatMonth(month) {
-  if (!month) {
-    return "";
-  }
+  if (!month) return "";
 
-  const parts =
-    month.split("-");
+  const parts = month.split("-");
 
   if (parts.length !== 2) {
     return month;
   }
 
-  const year =
-    Number(parts[0]);
+  const year = Number(parts[0]);
+  const monthNumber = Number(parts[1]);
 
-  const monthNumber =
-    Number(parts[1]);
+  const date = new Date(year, monthNumber - 1);
 
-  const date = new Date(
-    year,
-    monthNumber - 1
-  );
-
-  return date.toLocaleDateString(
-    "en-ZA",
-    {
-      month: "long",
-      year: "numeric",
-    }
-  );
+  return date.toLocaleDateString("en-ZA", {
+    month: "long",
+    year: "numeric",
+  });
 }
 
 // =====================================================
 // SUMMARY CARD
 // =====================================================
 
-function SummaryCard({
-  title,
-  value,
-}) {
+function SummaryCard({ title, value }) {
   return (
     <div
       style={{
-        background: "white",
-        padding: "25px",
+        background: "#ffffff",
+        padding: "24px",
         borderRadius: "12px",
-        boxShadow:
-          "0 2px 8px rgba(0,0,0,0.1)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        minHeight: "110px",
       }}
     >
       <h3
         style={{
-          marginTop: 0,
+          margin: 0,
           color: "#6b7280",
+          fontSize: "15px",
+          fontWeight: 600,
         }}
       >
         {title}
@@ -366,7 +366,10 @@ function SummaryCard({
 
       <h2
         style={{
+          marginTop: "12px",
           marginBottom: 0,
+          fontSize: "28px",
+          color: "#111827",
         }}
       >
         {value}
@@ -381,8 +384,10 @@ function SummaryCard({
 
 const cellStyle = {
   padding: "14px",
-  borderBottom:
-    "1px solid #e5e7eb",
+  borderBottom: "1px solid #e5e7eb",
+  whiteSpace: "nowrap",
 };
+
+// =====================================================
 
 export default Contributions;
