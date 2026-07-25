@@ -66,7 +66,7 @@ function Finance() {
 
     const selectedMember = members.find(
       (member) =>
-        String(member.id) === String(payment.memberId)
+        String(member_id) === String(payment.member_Id)
     );
 
     if (!selectedMember) {
@@ -326,8 +326,8 @@ function Finance() {
           ) {
             const newPayment =
               await addPayment({
-                memberId:
-                  matchedMember.id,
+                member_id:
+                  matchedMember_id,
 
                 amount,
 

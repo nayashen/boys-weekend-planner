@@ -58,26 +58,41 @@ export function TripProvider({ children }) {
   // LOAD MEMBERS
   // =====================================================
 
-  async function loadMembers() {
-    const { data, error } = await supabase
-      .from("members")
-      .select("*")
-      .order("created_at", {
-        ascending: true,
-      });
+  async function addMember(member) {
+  const { data, error } = await supabase
+    .from("members")
+    .insert([
+      {
+        name: member.name,
+        email: member.email || null,
+        phone: member.phone || null,
 
-    if (error) {
-      console.error(
-        "Error loading members:",
-        error
-      );
+        monthly_contribution: Number(
+          member.monthlyContribution || 0
+        ),
 
-      return;
-    }
+        drink_preference:
+          member.drink || null,
 
-    setMembers(data || []);
+        emergency_contact:
+          member.emergency || null,
+      },
+    ])
+    .select();
+
+  if (error) {
+    alert(
+      "Could not add member: " +
+        error.message
+    );
+
+    return false;
   }
 
+  await loadMembers();
+
+  return true;
+}
   // =====================================================
   // LOAD PAYMENTS
   // =====================================================
@@ -304,99 +319,122 @@ export function TripProvider({ children }) {
   // MEMBERS
   // =====================================================
 
-  async function addMember(member) {
-    const { data, error } = await supabase
-      .from("members")
-      .insert([
-        {
-          name: member.name,
-          email: member.email || null,
-          phone: member.phone || null,
-          monthly_contribution: Number(
-            member.monthlyContribution ||
-              member.contribution ||
-              0
-          ),
-        },
-      ])
-      .select();
+ // =====================================================
+// MEMBERS
+// =====================================================
 
-    if (error) {
-      alert(
-        "Could not add member: " +
-          error.message
-      );
+async function loadMembers() {
+  const { data, error } = await supabase
+    .from("members")
+    .select("*")
+    .order("created_at", {
+      ascending: true,
+    });
 
-      return false;
-    }
-
-    await loadMembers();
-
-    return true;
+  if (error) {
+    console.error(
+      "Error loading members:",
+      error
+    );
+    return;
   }
 
-  async function deleteMember(id) {
-    const { data, error } = await supabase
-      .from("members")
-      .delete()
-      .eq("id", id)
-      .select();
+  setMembers(data || []);
+}
 
-    if (error) {
-      alert(
-        "Could not delete member:\n\n" +
-          error.message
-      );
+async function addMember(member) {
+  const { error } = await supabase
+    .from("members")
+    .insert([
+      {
+        name: member.name,
+        email: member.email || null,
+        phone: member.phone || null,
 
-      return false;
-    }
-
-    if (!data || data.length === 0) {
-      alert(
-        "No member was deleted. Check Supabase permissions."
-      );
-
-      return false;
-    }
-
-    await loadMembers();
-
-    return true;
-  }
-
-  async function updateMember(
-    updatedMember
-  ) {
-    const { error } = await supabase
-      .from("members")
-      .update({
-        name: updatedMember.name,
-        email:
-          updatedMember.email || null,
-        phone:
-          updatedMember.phone || null,
         monthly_contribution: Number(
-          updatedMember.monthlyContribution ||
-            updatedMember.contribution ||
-            0
+          member.monthlyContribution || 0
         ),
-      })
-      .eq("id", updatedMember.id);
 
-    if (error) {
-      alert(
-        "Could not update member: " +
-          error.message
-      );
+        target_amount: Number(
+          member.targetAmount || 0
+        ),
 
-      return false;
-    }
+        drink_preference:
+          member.drink || null,
 
-    await loadMembers();
+        emergency_contact:
+          member.emergency || null,
+      },
+    ]);
 
-    return true;
+  if (error) {
+    alert(
+      "Could not add member: " +
+        error.message
+    );
+    return false;
   }
 
+  await loadMembers();
+
+  return true;
+}
+
+async function updateMember(updatedMember) {
+  const { error } = await supabase
+    .from("members")
+    .update({
+      name: updatedMember.name,
+      email: updatedMember.email || null,
+      phone: updatedMember.phone || null,
+
+      monthly_contribution: Number(
+        updatedMember.monthlyContribution || 0
+      ),
+
+      target_amount: Number(
+        updatedMember.targetAmount || 0
+      ),
+
+      drink_preference:
+        updatedMember.drink || null,
+
+      emergency_contact:
+        updatedMember.emergency || null,
+    })
+    .eq("id", updatedMember.id);
+
+  if (error) {
+    alert(
+      "Could not update member: " +
+        error.message
+    );
+    return false;
+  }
+
+  await loadMembers();
+
+  return true;
+}
+
+async function deleteMember(id) {
+  const { error } = await supabase
+    .from("members")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert(
+      "Could not delete member: " +
+        error.message
+    );
+    return false;
+  }
+
+  await loadMembers();
+
+  return true;
+}
   // =====================================================
   // PAYMENTS
   // =====================================================

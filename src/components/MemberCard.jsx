@@ -39,39 +39,56 @@ function MemberCard({ member, onEdit, onDelete }) {
           {member.name}
         </h2>
 
-        <p>📱 {member.phone}</p>
+        <p>📱 {member.phone || "-"}</p>
 
-        <p>📧 {member.email}</p>
+        <p>📧 {member.email || "-"}</p>
 
         <p>
-          💵 Monthly Contribution: R
-          {member.monthlyContribution ||
-            member.contribution ||
-            0}
+          🎯 <strong>Target Amount:</strong> R
+          {Number(
+            member.target_amount ??
+            member.targetAmount ??
+            0
+          ).toLocaleString()}
         </p>
 
         <p>
-          ✅ Total Paid: R
-          {member.totalPaid || 0}
+          ✅ <strong>Total Contributed:</strong> R
+          {Number(member.totalPaid || 0).toLocaleString()}
         </p>
 
-        <p>
-          ❌ Outstanding: R
-          {member.outstanding || 0}
+        <p
+          style={{
+            color:
+              Number(member.outstanding) === 0
+                ? "#16a34a"
+                : "#dc2626",
+            fontWeight: "bold",
+          }}
+        >
+          💰 Outstanding: R
+          {Number(member.outstanding || 0).toLocaleString()}
         </p>
 
         <p>
           🍻 Drink:{" "}
-          {member.drink || "Not selected"}
+          {member.drink_preference ??
+            member.drink ??
+            "Not selected"}
         </p>
 
         <p>
           🚨 Emergency Contact:{" "}
-          {member.emergency || "Not provided"}
+          {member.emergency_contact ??
+            member.emergency ??
+            "Not provided"}
         </p>
 
-        {/* BUTTONS */}
-        <div style={{ marginTop: "15px" }}>
+        <div
+          style={{
+            marginTop: "15px",
+          }}
+        >
           <button
             onClick={() => onEdit(member)}
             style={{

@@ -19,21 +19,25 @@ function Members() {
   // ADD OR EDIT MEMBER
   // =========================
 
-  function handleSaveMember(member) {
-    if (editingMember) {
-      updateMember({
-        ...member,
-        id: editingMember.id,
-      });
+function handleSaveMember(member) {
+  const memberToSave = {
+    ...member,
+    target_amount: Number(member.targetAmount || 0),
+  };
 
-      setEditingMember(null);
-    } else {
-      addMember(member);
-    }
+  if (editingMember) {
+    updateMember({
+      ...memberToSave,
+      id: editingMember.id,
+    });
 
-    setShowModal(false);
+    setEditingMember(null);
+  } else {
+    addMember(memberToSave);
   }
 
+  setShowModal(false);
+}
   // =========================
   // EDIT MEMBER
   // =========================
@@ -66,7 +70,7 @@ function Members() {
   function getMemberPayments(memberId) {
     return payments.filter(
       (payment) =>
-        String(payment.memberId) === String(memberId)
+        String(payment.member_id) === String(memberId)
     );
   }
 
@@ -117,6 +121,8 @@ function Members() {
         members.map((member) => {
           const memberPayments =
             getMemberPayments(member.id);
+            console.log("Current Member:", member);
+console.log("Payments Found:", memberPayments);
 
           const totalPaid = memberPayments.reduce(
             (total, payment) =>
@@ -124,25 +130,30 @@ function Members() {
             0
           );
 
-          const monthlyContribution = Number(
-            member.monthlyContribution ||
-              member.contribution ||
-              0
-          );
+const targetAmount = Number(
+  member.target_amount ||
+  member.targetAmount ||
+  0
+);
 
-          const outstanding = Math.max(
-            monthlyContribution - totalPaid,
-            0
-          );
+const outstanding = Math.max(
+  targetAmount - totalPaid,
+  0
+);
+
+         
+console.log("Members:", members);
+console.log("Payments:", payments);
 
           return (
             <div key={member.id}>
               <MemberCard
-                member={{
-                  ...member,
-                  totalPaid,
-                  outstanding,
-                }}
+              member={{
+  ...member,
+  targetAmount,
+  totalPaid,
+  outstanding,
+}}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
               />

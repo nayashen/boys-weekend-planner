@@ -10,6 +10,7 @@ function AddMemberModal({
     phone: "",
     email: "",
     monthlyContribution: "",
+    targetAmount: "",
     drink: "",
     emergency: "",
   });
@@ -20,12 +21,22 @@ function AddMemberModal({
         name: memberToEdit.name || "",
         phone: memberToEdit.phone || "",
         email: memberToEdit.email || "",
+
         monthlyContribution:
-          memberToEdit.monthlyContribution ||
-          memberToEdit.contribution ||
+          memberToEdit.monthly_contribution || "",
+
+        targetAmount:
+          memberToEdit.target_amount || "",
+
+        drink:
+          memberToEdit.drink_preference ||
+          memberToEdit.drink ||
           "",
-        drink: memberToEdit.drink || "",
-        emergency: memberToEdit.emergency || "",
+
+        emergency:
+          memberToEdit.emergency_contact ||
+          memberToEdit.emergency ||
+          "",
       });
     }
   }, [memberToEdit]);
@@ -38,18 +49,14 @@ function AddMemberModal({
   }
 
   function saveMember() {
-    if (member.name.trim() === "") {
+    console.log("MEMBER OBJECT:", member);
+
+    if (!member.name.trim()) {
       alert("Please enter a member name.");
       return;
     }
 
-    onSave({
-      ...member,
-      monthlyContribution: Number(
-        member.monthlyContribution || 0
-      ),
-    });
-
+    onSave(member);
     onClose();
   }
 
@@ -114,6 +121,15 @@ function AddMemberModal({
         />
 
         <input
+          type="number"
+          name="targetAmount"
+          placeholder="Target Amount"
+          value={member.targetAmount}
+          onChange={handleChange}
+          style={inputStyle}
+        />
+
+        <input
           name="drink"
           placeholder="Drink Preference"
           value={member.drink}
@@ -141,7 +157,6 @@ function AddMemberModal({
             onClick={onClose}
             style={{
               padding: "10px 20px",
-              cursor: "pointer",
             }}
           >
             Cancel
