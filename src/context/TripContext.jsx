@@ -54,45 +54,7 @@ export function TripProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
 
-  // =====================================================
-  // LOAD MEMBERS
-  // =====================================================
 
-  async function addMember(member) {
-  const { data, error } = await supabase
-    .from("members")
-    .insert([
-      {
-        name: member.name,
-        email: member.email || null,
-        phone: member.phone || null,
-
-        monthly_contribution: Number(
-          member.monthlyContribution || 0
-        ),
-
-        drink_preference:
-          member.drink || null,
-
-        emergency_contact:
-          member.emergency || null,
-      },
-    ])
-    .select();
-
-  if (error) {
-    alert(
-      "Could not add member: " +
-        error.message
-    );
-
-    return false;
-  }
-
-  await loadMembers();
-
-  return true;
-}
   // =====================================================
   // LOAD PAYMENTS
   // =====================================================
