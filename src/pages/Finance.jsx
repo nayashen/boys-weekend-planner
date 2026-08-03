@@ -17,6 +17,7 @@ function Finance() {
     deleteTransaction,
 
     linkTransactionToPayment,
+    loadPayments,
   } = useTrip();
 
   const { isAdmin, loading } = useUserRole();
@@ -59,41 +60,41 @@ function Finance() {
   // MANUAL PAYMENT
   // =====================================================
 
-  async function handleSubmit(event) {
-    event.preventDefault();
+ async function handleSubmit(event) {
+  event.preventDefault();
 
-    if (!isAdmin) return;
+  if (!isAdmin) return;
 
-    const selectedMember = members.find(
-      (member) =>
-        String(member_id) === String(payment.member_Id)
-    );
+  const selectedMember = members.find(
+    (member) =>
+      String(member.id) === String(payment.memberId)
+  );
 
-    if (!selectedMember) {
-      alert("Please select a member.");
-      return;
-    }
-
-    const newPayment = await addPayment({
-      memberId: selectedMember.id,
-      amount: Number(payment.amount),
-      contributionMonth: payment.contributionMonth,
-      date: payment.date,
-    });
-
-    if (!newPayment) {
-      return;
-    }
-
-    setPayment({
-      memberId: "",
-      amount: "",
-      contributionMonth: "",
-      date: "",
-    });
-
-    alert("Payment recorded successfully.");
+  if (!selectedMember) {
+    alert("Please select a member.");
+    return;
   }
+
+  const newPayment = await addPayment({
+    memberId: selectedMember.id,
+    amount: Number(payment.amount),
+    contributionMonth: payment.contributionMonth,
+    date: payment.date,
+  });
+
+  if (!newPayment) {
+    return;
+  }
+
+  setPayment({
+    memberId: "",
+    amount: "",
+    contributionMonth: "",
+    date: "",
+  });
+
+  alert("Payment recorded successfully.");
+}
 
   // =====================================================
   // DELETE PAYMENT
@@ -319,37 +320,50 @@ function Finance() {
 
           importedCount++;
 
-          // Automatically create payment
-          if (
-            matchedMember &&
-            type === "credit"
-          ) {
-            const newPayment =
-              await addPayment({
-                member_id:
-                  matchedMember_id,
+          
+      
 
-                amount,
 
-                contributionMonth:
-                  date.substring(0, 7),
+// Automatically create payment
+if (
+  matchedMember &&
+  type === "credit"
+) {
 
-                date,
-              });
+  const newPayment = await addPayment({
+    memberId: matchedMember.id,
+    amount,
+    contributionMonth: date.substring(0, 7),
+    date,
+  });
 
-            if (newPayment) {
-              const linked =
-                await linkTransactionToPayment(
-                  savedTransaction.id,
-                  newPayment.id
-                );
+  if (newPayment) {
 
-              if (linked) {
-                matchedCount++;
-              }
-            }
-          }
-        }
+    const linked =
+      await linkTransactionToPayment(
+        savedTransaction.id,
+        newPayment.id
+      );
+
+    console.log("LINK RESULT:", linked);
+
+    if (linked) {
+      matchedCount++;
+
+      // Refresh payment data after CSV import
+      await loadPayments();
+    }
+
+  } else {
+    console.log(
+      "Payment creation failed for:",
+      matchedMember.name
+    );
+  }
+
+} // closes matchedMember/type if
+
+        } // End for...of loop
 
         alert(
           `Import complete!\n\n` +
@@ -358,12 +372,19 @@ function Finance() {
             `Duplicates skipped: ${duplicateCount}\n` +
             `Failed: ${failedCount}`
         );
-      },
-    });
+
+      }, // closes Papa.parse complete
+
+    }); // closes Papa.parse
 
     event.target.value = "";
-  }
 
+  } // closes handleFileUpload
+
+
+  // =====================================================
+  // DELETE TRANSACTION
+  
   // =====================================================
   // DELETE TRANSACTION
   // =====================================================

@@ -37,11 +37,7 @@ export function TripProvider({ children }) {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [accommodation, setAccommodation] = useState(() => {
-    const saved = localStorage.getItem("accommodation");
-
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [accommodation, setAccommodation] = useState([]);
 
   const [
     selectedAccommodation,
@@ -157,92 +153,147 @@ export function TripProvider({ children }) {
 
   useEffect(() => {
     loadMembers();
-    loadPayments();
-    loadTransactions();
-    loadGroceries();
-    loadDrinks();
+loadPayments();
+loadTransactions();
+loadGroceries();
+loadDrinks();
+loadExpenses();
+loadAccommodation();
   }, []);
 
-  // =====================================================
-  // REALTIME
-  // =====================================================
+  async function loadAccommodation() {
+  const { data, error } = await supabase
+    .from("accommodation")
+    .select("*")
+    .order("created_at", {
+      ascending: true,
+    });
 
-  useEffect(() => {
-    const channel = supabase
-      .channel("trip-data-realtime")
+  if (error) {
+    console.error(
+      "Error loading accommodation:",
+      error
+    );
+    return;
+  }
 
-      // MEMBERS
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "members",
-        },
-        () => {
-          loadMembers();
-        }
-      )
+  setAccommodation(data || []);
+}
+  
+  // // =====================================================
+// REALTIME
+// =====================================================
 
-      // PAYMENTS
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "payments",
-        },
-        () => {
-          loadPayments();
-        }
-      )
+useEffect(() => {
+  const channel = supabase
+    .channel("trip-data-realtime")
 
-      // TRANSACTIONS
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "transactions",
-        },
-        () => {
-          loadTransactions();
-        }
-      )
+    // MEMBERS
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "members",
+      },
+      (payload) => {
+        console.log("Members changed:", payload);
+        loadMembers();
+      }
+    )
 
-      // GROCERIES
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "groceries",
-        },
-        () => {
-          loadGroceries();
-        }
-      )
+    // PAYMENTS
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "payments",
+      },
+      (payload) => {
+        console.log("Payments changed:", payload);
+        loadPayments();
+      }
+    )
 
-      // DRINKS
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "drinks",
-        },
-        () => {
-          loadDrinks();
-        }
-      );
+    // TRANSACTIONS
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "transactions",
+      },
+      (payload) => {
+        console.log("Transactions changed:", payload);
+        loadTransactions();
+      }
+    )
 
-    channel.subscribe();
+    // GROCERIES
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "groceries",
+      },
+      (payload) => {
+        console.log("Groceries changed:", payload);
+        loadGroceries();
+      }
+    )
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+    // DRINKS
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "drinks",
+      },
+      (payload) => {
+        console.log("Drinks changed:", payload);
+        loadDrinks();
+      }
+    )
 
+    // EXPENSES
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "expenses",
+      },
+      (payload) => {
+        console.log("Expenses changed:", payload);
+        loadExpenses();
+      }
+    )
+
+    // ACCOMMODATION
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "accommodation",
+      },
+      (payload) => {
+        console.log("Accommodation changed:", payload);
+        loadAccommodation();
+      }
+    );
+
+  channel.subscribe((status) => {
+    console.log("Realtime status:", status);
+  });
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
   // =====================================================
   // LOCAL STORAGE
   // =====================================================
@@ -261,12 +312,7 @@ export function TripProvider({ children }) {
     );
   }, [expenses]);
 
-  useEffect(() => {
-    localStorage.setItem(
-      "accommodation",
-      JSON.stringify(accommodation)
-    );
-  }, [accommodation]);
+
 
   useEffect(() => {
     localStorage.setItem(
@@ -277,10 +323,7 @@ export function TripProvider({ children }) {
     );
   }, [selectedAccommodation]);
 
-  // =====================================================
-  // MEMBERS
-  // =====================================================
-
+  
  // =====================================================
 // MEMBERS
 // =====================================================
@@ -402,55 +445,60 @@ async function deleteMember(id) {
   // =====================================================
 
   async function addPayment(payment) {
-    const { data, error } = await supabase
-      .from("payments")
-      .insert([
-        {
-          member_id: payment.memberId,
-          amount: Number(payment.amount),
-          date: payment.date || null,
-          contribution_month:
-            payment.contributionMonth ||
-            null,
-        },
-      ])
-      .select()
-      .single();
+  console.log("addPayment() called with:", payment);
 
-    if (error) {
-      alert(
-        "Could not add payment: " +
-          error.message
-      );
+  const { data, error } = await supabase
+    .from("payments")
+    .insert([
+      {
+        member_id: payment.memberId,
+        amount: Number(payment.amount),
+        date: payment.date || null,
+        contribution_month:
+          payment.contributionMonth || null,
+      },
+    ])
+    .select()
+    .single();
 
-      return null;
-    }
+  if (error) {
+    console.error("Supabase addPayment error:", error);
 
-    await loadPayments();
+    alert(
+      "Could not add payment: " +
+        error.message
+    );
 
-    return data;
+    return null;
   }
 
-  async function deletePayment(id) {
-    const { error } = await supabase
-      .from("payments")
-      .delete()
-      .eq("id", id);
+  console.log("Payment successfully created:", data);
 
-    if (error) {
-      alert(
-        "Could not delete payment: " +
-          error.message
-      );
 
-      return false;
-    }
+await loadPayments();
 
-    await loadPayments();
+  return data;
+}
 
-    return true;
+async function deletePayment(id) {
+  const { error } = await supabase
+    .from("payments")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert(
+      "Could not delete payment: " +
+        error.message
+    );
+
+    return false;
   }
 
+  await loadPayments();
+
+  return true;
+}
   // =====================================================
   // TRANSACTIONS
   // =====================================================
@@ -766,71 +814,136 @@ async function deleteMember(id) {
   // EXPENSES
   // =====================================================
 
-  function addExpense(
-    expense
-  ) {
-    const newExpense = {
-      ...expense,
-      id: Date.now(),
-    };
+ async function addExpense(expense) {
 
-    setExpenses(
-      (previous) => [
-        ...previous,
-        newExpense,
-      ]
+  const { data, error } = await supabase
+    .from("expenses")
+    .insert([
+      {
+        description: expense.description,
+        amount: Number(expense.amount),
+        category: expense.category || "",
+        date: expense.date || null,
+      },
+    ])
+    .select()
+    .single();
+
+
+  if(error){
+    console.error(
+      "Could not add expense:",
+      error
     );
+
+    return false;
   }
 
-  function deleteExpense(
-    id
-  ) {
-    setExpenses(
-      (previous) =>
-        previous.filter(
-          (expense) =>
-            String(
-              expense.id
-            ) !==
-            String(id)
-        )
+
+  await loadExpenses();
+
+  return data;
+}
+
+
+
+async function deleteExpense(id){
+
+  const { error } = await supabase
+    .from("expenses")
+    .delete()
+    .eq("id", id);
+
+
+  if(error){
+
+    console.error(
+      "Could not delete expense:",
+      error
     );
+
+    return false;
   }
 
+
+  await loadExpenses();
+
+  return true;
+}
+async function loadExpenses(){
+
+  const {data,error}=await supabase
+    .from("expenses")
+    .select("*")
+    .order("created_at",
+    {
+      ascending:true
+    });
+
+
+  if(error){
+    console.error(error);
+    return;
+  }
+
+
+  setExpenses(data || []);
+
+}
   // =====================================================
   // ACCOMMODATION
   // =====================================================
 
-  function addAccommodation(
-    option
-  ) {
-    const newOption = {
-      ...option,
-      id: Date.now(),
-    };
+async function addAccommodation(option) {
+  const { data, error } = await supabase
+    .from("accommodation")
+    .insert([
+      {
+        name: option.name,
+        location: option.location,
+        price: Number(option.price),
+        nights: Number(option.nights),
+        capacity: Number(option.capacity),
+        link: option.link || "",
+        notes: option.notes || "",
+      },
+    ])
+    .select()
+    .single();
 
-    setAccommodation(
-      (previous) => [
-        ...previous,
-        newOption,
-      ]
+  if (error) {
+    alert(
+      "Could not add accommodation: " +
+      error.message
     );
+    return false;
   }
 
-  function deleteAccommodation(
-    id
-  ) {
-    setAccommodation(
-      (previous) =>
-        previous.filter(
-          (option) =>
-            String(
-              option.id
-            ) !==
-            String(id)
-        )
+  await loadAccommodation();
+
+  return data;
+}
+
+  
+
+ async function deleteAccommodation(id) {
+  const { error } = await supabase
+    .from("accommodation")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert(
+      "Could not delete accommodation: " +
+      error.message
     );
+    return false;
   }
+
+  await loadAccommodation();
+
+  return true;
+}
 
   function selectAccommodation(
     id
@@ -840,7 +953,7 @@ async function deleteMember(id) {
     );
   }
 
-  // =====================================================
+    // =====================================================
   // PROVIDER
   // =====================================================
 
@@ -857,6 +970,7 @@ async function deleteMember(id) {
         payments,
         addPayment,
         deletePayment,
+        loadPayments,
 
         // TRANSACTIONS
         transactions,
@@ -899,7 +1013,5 @@ async function deleteMember(id) {
 }
 
 export function useTrip() {
-  return useContext(
-    TripContext
-  );
+  return useContext(TripContext);
 }
