@@ -73,12 +73,11 @@ function Dashboard() {
   // Transactions
   // ===========================
 
-  const moneyReceived = transactions
-    .filter((t) => t.type === "credit")
-    .reduce(
-      (sum, t) => sum + Number(t.amount || 0),
-      0
-    );
+  const moneyReceived = payments.reduce(
+  (sum, payment) =>
+    sum + Number(payment.amount || 0),
+  0
+);
 
   const moneySpent = transactions
     .filter((t) => t.type === "debit")
@@ -87,8 +86,7 @@ function Dashboard() {
       0
     );
 
-  const currentBalance =
-    moneyReceived - moneySpent;
+  const currentBalance = moneyReceived - moneySpent;
 
   // ===========================
   // Planned Costs
